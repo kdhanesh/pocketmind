@@ -65,9 +65,9 @@ mode that would actually hurt someone.
 | LearnLoop content | English only, class 8-10, Maths/Science/Social, representative topic slice. Other languages need the test-sheet process in PROOF_AND_PILOT_PLAN.md before being claimed. |
 | Engine (retrieval, llama client, web app) | **Built and running live on a real physical phone** (Redmi 24116RNC1I) — not just smoke-tested locally. |
 | On-device model | Switched to **Qwen2.5-0.5B-Instruct** as default (3-5x faster than 1.5B, ~15s vs. 42-83s per answer, no quality loss found — see BENCHMARKS.md). |
-| Interactive UI | Working fetch()-based flow with a live "thinking" timer (real answers take 15-85s, so an honest live timer beats a frozen page). Visual redesign in progress via `design/GEMINI_GUI_PROMPT.md`. |
-| Vehicle Risk (new, prototype) | Two-stage offline behavior classifier trained on real accelerometer data, 70% held-out-trip accuracy on risk detection. Software-only; ESP32 port is next. See `vehicle-risk/README.md`. |
-| End-to-end on the actual phone | **Done.** Confirmed working over Wi-Fi; airplane-mode proof screenshot still pending. |
+| Interactive UI | Working fetch()-based flow with a live "thinking" timer (real answers take 15-85s, so an honest live timer beats a frozen page). Organic-minimalist theme (Fraunces + Source Sans 3), confirmed rendering on-device. |
+| Fleet Risk (vehicle accident-risk) | Two-stage offline behavior classifier, 70% held-out-trip accuracy on risk detection. **Runs live on the phone** — a 4th tab in the web UI replays a recorded trip through the model on-device, and `vehicle-risk/replay_termux.py` gives the same result as a terminal stream. No sklearn/pandas needed on-device: the trained forests are exported to plain-Python-walkable JSON (`vehicle-risk/infer.py`), numerically verified to match sklearn exactly. ESP32 firmware port is next. See `vehicle-risk/README.md`. |
+| End-to-end on the actual phone | **Done.** Confirmed working over Wi-Fi for all three tools; airplane-mode proof screenshot still pending. |
 
 ## Running it
 

@@ -72,7 +72,7 @@ textbook-style note → SLM rephrases, walking through any worked example →
 answer shown with the matched topic, timing, and a "confirm with your
 teacher" caveat.
 
-### 3. Vehicle Risk — driving-behavior / accident-risk classifier (prototype)
+### 3. Fleet Risk — driving-behavior / accident-risk classifier (prototype)
 Raw accelerometer + gyroscope + magnetometer stream (the same sensor class
 a real ESP32 + IMU rig produces) → a tiny two-stage RandomForest (30 trees,
 depth 6 each) → Stage 1 flags an elevated-risk moment, Stage 2 names the
@@ -81,8 +81,20 @@ change) as the **reasoning** shown with the alert, mapped to a risk tier.
 Trained on 54 real recorded trips (Kaggle harsh-driving dataset), 70%
 held-out-trip accuracy on the risk flag. Honestly framed as a behavior
 classifier, not a crash predictor — no public dataset pairs raw telemetry
-with actual crash outcomes. Software-only today; the trees are small
-enough to port to real ESP32 firmware next. See `vehicle-risk/README.md`.
+with actual crash outcomes.
+
+Runs live on the phone, not just on a laptop: `vehicle-risk/export_portable.py`
+dumps the trained forests' raw tree arrays (feature/threshold/children/leaf
+values) to a 509KB JSON file, and `vehicle-risk/infer.py` walks them with
+plain-stdlib Python — no numpy, pandas, or scikit-learn needed on-device,
+since Termux has no safe path to a built sklearn wheel. Verified
+numerically identical to sklearn's own `predict_proba` on a held-out trip
+(max probability diff: 0.000000). This is both a 4th tab in the web UI
+(`/fleet` — pick a recorded trip, replay it on-device) and a standalone
+terminal script (`replay_termux.py`) for the airplane-mode, terminal-visible
+proof. The trees are small enough that this same JSON-walk pattern is a
+direct preview of the eventual ESP32 C-firmware port. See
+`vehicle-risk/README.md`.
 
 ## Proving it's actually offline
 
@@ -103,10 +115,15 @@ pocketmind/
   engine/
     retrieval.py          keyword-match retrieval over the content banks
     llama_client.py        stdlib HTTP client for llama.cpp's native server
-    app.py                  the demo web app (AgriLens + LearnLoop UI)
+    app.py                  the demo web app (AgriLens + LearnLoop + Fleet Risk UI)
     setup_termux.sh          one-shot phone setup script
   vehicle-risk/          accident-risk behavior classifier (prototype)
-    train.py, replay_demo.py, model/, data/, README.md
+    train.py                sklearn training (laptop-side, needs the venv)
+    export_portable.py      dumps trained forests to sklearn-free JSON
+    infer.py                 pure-stdlib tree-walk inference (runs on-device)
+    replay_demo.py           sklearn-backed terminal replay (laptop-side)
+    replay_termux.py         pure-stdlib terminal replay (runs on-device)
+    model/, data/, README.md
   design/
     GEMINI_GUI_PROMPT.md   self-contained prompt for redesigning the UI
   ARCHITECTURE.md        this file
