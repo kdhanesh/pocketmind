@@ -33,36 +33,43 @@ ENGINE_DIR = Path(__file__).parent
 ROOT_DIR = ENGINE_DIR.parent
 sys.path.insert(0, str(ENGINE_DIR))
 sys.path.insert(0, str(ROOT_DIR / "agrilens"))
+sys.path.insert(0, str(ROOT_DIR / "vehicle-risk"))
 
 from retrieval import Retriever  # noqa: E402
 from llama_client import LlamaClient, build_prompt, LlamaServerError  # noqa: E402
+from infer import RiskModel, summarize_trip  # noqa: E402
 
 ADVICE_BANK = Retriever(sorted((ROOT_DIR / "advice_bank").glob("*.md")))
 LEARN_CONTENT = Retriever(sorted((ROOT_DIR / "learnloop").glob("content_*.md")))
 LLAMA = LlamaClient()
+RISK_MODEL = RiskModel()
+SAMPLE_TRIPS_DIR = ROOT_DIR / "vehicle-risk" / "data" / "sample_trips"
 
 CAVEAT_AGRI = "Advice only. Confirm with your agriculture officer / KVK before acting."
 CAVEAT_LEARN = "Practice answer from LearnLoop — a prototype tutor. Confirm with your teacher."
+CAVEAT_FLEET = ("Behavior classifier, not a crash predictor — no public dataset pairs raw "
+                "telemetry with real crash outcomes. Runs entirely on-device, same model "
+                "size an ESP32 firmware port would use.")
 
 PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PocketMind — VYOMAA LABS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --soil-dark: #121c15;
-    --soil-card: #1a291f;
-    --soil-border: #294231;
-    --leaf-primary: #347d47;
-    --leaf-hover: #2d6b3d;
-    --accent-gold: #e6a15c;
-    --text-main: #f3f6f3;
-    --text-muted: #94a899;
-    --danger: #e06c57;
-    --badge-bg: rgba(230, 161, 92, 0.15);
-    --radius-lg: 20px;
+    --paper: #f6f1e6;
+    --paper-card: #fffcf6;
+    --ink: #2b2420;
+    --ink-soft: #7a6e60;
+    --line: #e4d8c3;
+    --sage: #7c8a6a;
+    --sage-ink: #35401f;
+    --clay: #bd6f45;
+    --clay-soft: #f1e0cf;
+    --danger: #a8503c;
+    --radius-lg: 22px;
     --radius-md: 14px;
     --radius-sm: 10px;
   }
@@ -72,136 +79,135 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
   html, body { height: 100%; }
 
   body {
-    background-color: var(--soil-dark);
-    background-image:
-      radial-gradient(circle at 100% 0%, rgba(52, 125, 71, 0.12) 0%, transparent 50%),
-      radial-gradient(circle at 0% 100%, rgba(230, 161, 92, 0.08) 0%, transparent 50%);
-    color: var(--text-main);
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
     margin: 0;
-    padding: 24px 16px 48px;
+    padding: 28px 18px 48px;
     max-width: 480px;
     margin-inline: auto;
-    line-height: 1.5;
+    line-height: 1.55;
   }
 
   header {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 24px;
+    gap: 10px;
+    margin-bottom: 26px;
   }
 
   .brand-row {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: baseline;
+    gap: 12px;
   }
 
   h1 {
-    font-size: 1.625rem;
-    font-weight: 800;
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-style: italic;
+    font-size: 2rem;
+    font-weight: 600;
     margin: 0;
-    letter-spacing: -0.02em;
-    color: #ffffff;
+    letter-spacing: -0.01em;
+    color: var(--ink);
   }
 
   .offline-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: var(--badge-bg);
-    color: var(--accent-gold);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 5px 10px;
-    border-radius: 30px;
-    letter-spacing: 0.04em;
-    border: 1px solid rgba(230, 161, 92, 0.3);
+    background: transparent;
+    color: var(--clay);
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 4px 0;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
   }
 
   .offline-badge::before {
     content: '';
     width: 6px;
     height: 6px;
-    background-color: var(--accent-gold);
+    background-color: var(--clay);
     border-radius: 50%;
-    box-shadow: 0 0 8px var(--accent-gold);
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.85); }
-    100% { opacity: 1; transform: scale(1); }
+    flex: none;
   }
 
   .sub {
-    color: var(--text-muted);
-    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-size: 0.88rem;
     margin: 0;
-    font-weight: 500;
+    font-weight: 400;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
   }
 
   nav {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    background: rgba(26, 41, 31, 0.6);
-    padding: 4px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--soil-border);
-    margin-bottom: 24px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    margin-bottom: 26px;
   }
 
   nav a {
     text-align: center;
-    color: var(--text-muted);
+    color: var(--ink-soft);
     text-decoration: none;
     padding: 10px 8px;
-    border-radius: 10px;
-    font-size: 0.85rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
     font-weight: 600;
+    border: 1px solid var(--line);
     transition: all 0.2s ease;
   }
 
   nav a:hover {
-    color: var(--text-main);
+    border-color: var(--sage);
+    color: var(--ink);
   }
 
   nav a.active {
-    background: var(--leaf-primary);
-    color: #ffffff;
-    box-shadow: 0 4px 12px rgba(52, 125, 71, 0.3);
+    background: var(--sage);
+    color: #fdfbf4;
+    border-color: var(--sage);
   }
 
   .card {
-    background: var(--soil-card);
-    border: 1px solid var(--soil-border);
+    background: var(--paper-card);
+    border: 1px solid var(--line);
     border-radius: var(--radius-lg);
-    padding: 20px;
+    padding: 24px;
     margin-bottom: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 1px 2px rgba(43, 36, 32, 0.04);
+  }
+
+  .card h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.2rem;
   }
 
   label {
     display: block;
-    font-size: 0.75rem;
-    color: var(--text-muted);
+    font-size: 0.72rem;
+    color: var(--ink-soft);
     margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    font-weight: 700;
+    font-weight: 600;
   }
 
-  input[type=file], input[type=text] {
+  input[type=file], input[type=text], select {
     width: 100%;
-    background: var(--soil-dark);
-    color: var(--text-main);
-    border: 1.5px solid var(--soil-border);
+    background: var(--paper);
+    color: var(--ink);
+    border: 1.5px solid var(--line);
     border-radius: var(--radius-sm);
-    padding: 14px;
+    padding: 13px 14px;
     font-size: 0.95rem;
     font-family: inherit;
     margin-bottom: 16px;
@@ -209,8 +215,8 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
   }
 
   input[type=file]::file-selector-button {
-    background: var(--soil-border);
-    color: var(--text-main);
+    background: var(--clay-soft);
+    color: var(--clay);
     border: none;
     padding: 8px 12px;
     border-radius: 6px;
@@ -219,43 +225,42 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
     cursor: pointer;
   }
 
-  input[type=text]:focus, input[type=file]:focus {
+  input[type=text]:focus, input[type=file]:focus, select:focus {
     outline: none;
-    border-color: var(--leaf-primary);
-    box-shadow: 0 0 0 3px rgba(52, 125, 71, 0.2);
+    border-color: var(--sage);
+    box-shadow: 0 0 0 3px rgba(124, 138, 106, 0.18);
   }
 
   button[type=submit], .btn-action {
-    background: var(--leaf-primary);
-    color: #ffffff;
+    background: var(--sage);
+    color: #fdfbf4;
     border: none;
     border-radius: var(--radius-sm);
     padding: 14px 20px;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 0.95rem;
     font-family: inherit;
     cursor: pointer;
     width: 100%;
+    text-decoration: none;
+    box-sizing: border-box;
     transition: background 0.2s, transform 0.1s;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    box-shadow: 0 4px 14px rgba(52, 125, 71, 0.3);
   }
 
-  button[type=submit]:active, .btn-action:active {
-    transform: scale(0.98);
-  }
+  button[type=submit]:hover, .btn-action:hover { background: var(--sage-ink); }
+  button[type=submit]:active, .btn-action:active { transform: scale(0.98); }
 
   button[type=submit]:disabled {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: default;
-    box-shadow: none;
   }
 
   .result {
-    border-left: 4px solid var(--accent-gold);
+    border-left: 3px solid var(--clay);
     animation: riseIn 0.35s ease;
   }
 
@@ -266,30 +271,27 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 
   .result h3 {
     margin: 0 0 8px;
-    font-size: 1.15rem;
-    color: #ffffff;
-    font-weight: 700;
+    color: var(--ink);
   }
 
   .meta {
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--text-muted);
-    font-size: 0.7rem;
+    color: var(--ink-soft);
+    font-size: 0.74rem;
     margin-bottom: 14px;
     font-weight: 500;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 6px 10px;
+    background: var(--clay-soft);
+    padding: 5px 10px;
     border-radius: 6px;
     display: inline-block;
   }
 
   .caveat {
     margin-top: 16px;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    border-top: 1px solid var(--soil-border);
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--line);
     padding-top: 12px;
-    line-height: 1.4;
+    line-height: 1.45;
   }
 
   .err {
@@ -304,52 +306,50 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
     line-height: 1.6;
     margin: 0;
     font-size: 0.925rem;
-    color: var(--text-main);
+    color: var(--ink);
   }
 
   .thinking {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: var(--accent-gold);
+    color: var(--clay);
     font-size: 0.9rem;
     font-weight: 600;
   }
 
   .spinner {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    border: 2.5px solid rgba(230, 161, 92, 0.2);
-    border-top-color: var(--accent-gold);
+    border: 2.5px solid var(--clay-soft);
+    border-top-color: var(--clay);
     animation: spin 0.8s linear infinite;
     flex: none;
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .thinking .t {
-    font-variant-numeric: tabular-nums;
-    font-family: 'JetBrains Mono', monospace;
-  }
+  .thinking .t { font-variant-numeric: tabular-nums; }
 
   .hint {
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: var(--ink-soft);
     margin-top: 8px;
   }
 </style></head><body>
 <header>
   <div class="brand-row">
     <h1>PocketMind</h1>
-    <div class="offline-badge">100% ON-DEVICE</div>
+    <div class="offline-badge">On-device</div>
   </div>
-  <p class="sub">VYOMAA LABS — Zero cloud calls, runs locally via Termux</p>
+  <p class="sub">VYOMAA LABS — zero cloud calls, runs locally via Termux</p>
 </header>
 <nav>
   <a href="/" class="__NAV_HOME__">Home</a>
   <a href="/agrilens" class="__NAV_AGRI__">AgriLens</a>
   <a href="/learnloop" class="__NAV_LEARN__">LearnLoop</a>
+  <a href="/fleet" class="__NAV_FLEET__">Fleet Risk</a>
 </nav>
 """
 PAGE_SCRIPT = """
@@ -423,7 +423,8 @@ def render(body: str, active: str = "") -> bytes:
     head = (PAGE_HEAD
             .replace("__NAV_HOME__", "active" if active == "home" else "")
             .replace("__NAV_AGRI__", "active" if active == "agri" else "")
-            .replace("__NAV_LEARN__", "active" if active == "learn" else ""))
+            .replace("__NAV_LEARN__", "active" if active == "learn" else "")
+            .replace("__NAV_FLEET__", "active" if active == "fleet" else ""))
     return (head + body + PAGE_SCRIPT + PAGE_TAIL).encode("utf-8")
 
 
@@ -432,12 +433,17 @@ def home_page() -> bytes:
 <div class="card">
   <h3 style="margin-top:0">AgriLens</h3>
   <p class="meta" style="font-family:inherit; display:block; background:none; padding:0">Point a camera at a chilli, tomato, or maize leaf. Get an offline health read.</p>
-  <a href="/agrilens"><button type="button" class="btn-action">Open AgriLens</button></a>
+  <a href="/agrilens" class="btn-action">Open AgriLens</a>
 </div>
 <div class="card">
   <h3 style="margin-top:0">LearnLoop</h3>
   <p class="meta" style="font-family:inherit; display:block; background:none; padding:0">Ask a class 8-10 Maths, Science, or Social question. Get a plain-language explanation.</p>
-  <a href="/learnloop"><button type="button" class="btn-action">Open LearnLoop</button></a>
+  <a href="/learnloop" class="btn-action">Open LearnLoop</a>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">Fleet Risk</h3>
+  <p class="meta" style="font-family:inherit; display:block; background:none; padding:0">Replay a real recorded trip's accelerometer/gyro stream through the on-device risk model, same as an ESP32+IMU rig would send.</p>
+  <a href="/fleet" class="btn-action">Open Fleet Risk</a>
 </div>
 """
     return render(body, "home")
@@ -469,6 +475,28 @@ def learnloop_form(result_html: str = "") -> bytes:
 <div id="learnloop-result">{result_html}</div>
 """
     return render(body, "learn")
+
+
+def fleet_form(result_html: str = "") -> bytes:
+    trips = sorted(p.name for p in SAMPLE_TRIPS_DIR.glob("*.csv"))
+    options = "".join(f'<option value="{html.escape(t)}">{html.escape(_trip_label(t))}</option>' for t in trips)
+    body = f"""
+<div class="card">
+  <form method="POST" action="/fleet" data-pm="fleet-result">
+    <label>Recorded trip (accelerometer + gyroscope stream)</label>
+    <select name="trip">{options}</select>
+    <button type="submit">Replay on-device</button>
+  </form>
+  <p class="hint" style="margin-top:14px">Same raw IMU signal an ESP32 + MPU6050/9250 rig streams from the OBD2-adjacent sensor mount. Two-stage RandomForest, 30 trees each, no cloud call.</p>
+</div>
+<div id="fleet-result">{result_html}</div>
+"""
+    return render(body, "fleet")
+
+
+def _trip_label(fname: str) -> str:
+    parts = fname.replace(".csv", "").split("_")
+    return " ".join(parts[1:3]) if len(parts) > 2 else fname
 
 
 def result_card(title: str, meta: str, answer: str, caveat: str) -> str:
@@ -511,6 +539,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send(agrilens_form())
         elif self.path.startswith("/learnloop"):
             self._send(learnloop_form())
+        elif self.path.startswith("/fleet"):
+            self._send(fleet_form())
         else:
             self._send(b"not found", 404)
 
@@ -520,6 +550,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._handle_agrilens()
             elif self.path.startswith("/learnloop"):
                 self._handle_learnloop()
+            elif self.path.startswith("/fleet"):
+                self._handle_fleet()
             else:
                 self._send(b"not found", 404)
         except Exception as e:
@@ -627,6 +659,30 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json({"title": title, "meta": meta, "answer": answer, "caveat": CAVEAT_LEARN})
         else:
             self._send(learnloop_form(result_card(title, meta, answer, CAVEAT_LEARN)))
+
+    # ---- Fleet Risk ----
+    def _handle_fleet(self):
+        ajax = self._is_ajax()
+        length = int(self.headers.get("Content-Length", 0))
+        raw = self.rfile.read(length).decode("utf-8", errors="replace")
+        fields = parse_qs(raw)
+        trip = (fields.get("trip") or [""])[0].strip()
+        trip_path = SAMPLE_TRIPS_DIR / trip
+        if not trip or not trip_path.is_file():
+            msg = "Pick a recorded trip first."
+            self._send_json({"error": msg}, 400) if ajax else self._send(fleet_form(error_card(msg)), 400)
+            return
+
+        t0 = time.time()
+        answer = summarize_trip(RISK_MODEL, trip_path)
+        ms = int((time.time() - t0) * 1000)
+        title = _trip_label(trip)
+        meta = f"Replayed {trip} · 2-stage RandomForest (60 trees total) · {ms}ms · fully offline"
+
+        if ajax:
+            self._send_json({"title": title, "meta": meta, "answer": answer, "caveat": CAVEAT_FLEET})
+        else:
+            self._send(fleet_form(result_card(title, meta, answer, CAVEAT_FLEET)))
 
 
 def _extract_multipart_file(raw: bytes, boundary: bytes, field_name: bytes) -> bytes | None:
