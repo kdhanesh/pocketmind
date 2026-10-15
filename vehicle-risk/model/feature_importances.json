@@ -1,0 +1,30 @@
+{
+  "stage1_event_detector": {
+    "acc_x": 0.0247,
+    "acc_y": 0.018,
+    "acc_z": 0.0051,
+    "gyro_x": 0.0159,
+    "gyro_y": 0.011,
+    "gyro_z": 0.2665,
+    "accel_mag": 0.0185,
+    "gyro_mag": 0.2382,
+    "accel_mag_roll_max": 0.0939,
+    "accel_mag_roll_std": 0.0245,
+    "gyro_mag_roll_max": 0.216,
+    "gyro_mag_roll_std": 0.0677
+  },
+  "stage2_event_subtype": {
+    "acc_x": 0.0679,
+    "acc_y": 0.0761,
+    "acc_z": 0.0021,
+    "gyro_x": 0.007,
+    "gyro_y": 0.0117,
+    "gyro_z": 0.3074,
+    "accel_mag": 0.016,
+    "gyro_mag": 0.1313,
+    "accel_mag_roll_max": 0.103,
+    "accel_mag_roll_std": 0.0598,
+    "gyro_mag_roll_max": 0.179,
+    "gyro_mag_roll_std": 0.0388
+  }
+}

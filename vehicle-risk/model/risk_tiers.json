@@ -1,0 +1,12 @@
+{
+  "normal": "low",
+  "safe": "low",
+  "safe-acc": "low",
+  "safe-no-movement": "low",
+  "sudden-left-turn": "medium",
+  "sudden-right-turn": "medium",
+  "sudden-left-line-chg": "medium",
+  "sudden-right-line-chg": "medium",
+  "sudden-brake": "high",
+  "sudden-acc": "high"
+}
