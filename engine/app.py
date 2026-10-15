@@ -56,61 +56,90 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>PocketMind — VYOMAA LABS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #f6f1e6;
-    --paper-card: #fffcf6;
-    --ink: #2b2420;
-    --ink-soft: #7a6e60;
-    --line: #e4d8c3;
-    --sage: #7c8a6a;
-    --sage-ink: #35401f;
-    --clay: #bd6f45;
-    --clay-soft: #f1e0cf;
-    --danger: #a8503c;
-    --radius-lg: 22px;
-    --radius-md: 14px;
-    --radius-sm: 10px;
+    --paper: #f7f3ee;
+    --paper-card: #ffffff;
+    --ink: #1f1b18;
+    --ink-soft: #635952;
+    --line: #e6dfd5;
+    --accent: #4a6741;
+    --accent-soft: #eaf2e8;
+    --clay: #a65d37;
+    --danger: #b33f32;
+    --radius-xl: 28px;
+    --radius-lg: 20px;
+    --radius-sm: 12px;
+  }
+
+  body[data-tool="agri"] {
+    --paper: #f3f6f0;
+    --paper-card: #fbfff8;
+    --ink: #19261c;
+    --ink-soft: #546657;
+    --line: #d8e6d9;
+    --accent: #3d6b47;
+    --accent-soft: #e7f2e9;
+  }
+
+  body[data-tool="learn"] {
+    --paper: #f1f4f9;
+    --paper-card: #ffffff;
+    --ink: #141c2e;
+    --ink-soft: #526075;
+    --line: #d3e1f0;
+    --accent: #2b5c8f;
+    --accent-soft: #e5f0fb;
+  }
+
+  body[data-tool="fleet"] {
+    --paper: #0f1318;
+    --paper-card: #182028;
+    --ink: #edf2f7;
+    --ink-soft: #8494a7;
+    --line: #263240;
+    --accent: #f59e0b;
+    --accent-soft: rgba(245, 158, 11, 0.12);
+    --clay: #ef4444;
+    --danger: #ef4444;
   }
 
   *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
   html, body { height: 100%; }
 
   body {
     background: var(--paper);
     color: var(--ink);
-    font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
-    padding: 28px 18px 48px;
-    max-width: 480px;
+    padding: 24px 16px 48px;
+    max-width: 440px;
     margin-inline: auto;
-    line-height: 1.55;
+    line-height: 1.5;
+    transition: background 0.3s ease, color 0.3s ease;
   }
 
   header {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 26px;
+    gap: 8px;
+    margin-bottom: 20px;
   }
 
   .brand-row {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
-    gap: 12px;
+    align-items: center;
   }
 
   h1 {
     font-family: 'Fraunces', Georgia, serif;
-    font-optical-sizing: auto;
     font-style: italic;
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: 600;
     margin: 0;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
     color: var(--ink);
   }
 
@@ -118,87 +147,84 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: transparent;
-    color: var(--clay);
-    font-size: 0.68rem;
-    font-weight: 600;
-    padding: 4px 0;
-    letter-spacing: 0.07em;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    white-space: nowrap;
   }
 
   .offline-badge::before {
     content: '';
     width: 6px;
     height: 6px;
-    background-color: var(--clay);
+    background-color: var(--accent);
     border-radius: 50%;
-    flex: none;
   }
 
   .sub {
     color: var(--ink-soft);
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     margin: 0;
     font-weight: 400;
-    border-top: 1px solid var(--line);
-    padding-top: 12px;
   }
 
   nav {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
-    margin-bottom: 26px;
+    margin-bottom: 24px;
+    background: var(--line);
+    padding: 4px;
+    border-radius: 24px;
   }
 
   nav a {
     text-align: center;
     color: var(--ink-soft);
     text-decoration: none;
-    padding: 10px 8px;
-    border-radius: var(--radius-sm);
-    font-size: 0.82rem;
+    padding: 10px 4px;
+    border-radius: 20px;
+    font-size: 0.78rem;
     font-weight: 600;
-    border: 1px solid var(--line);
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  nav a:hover {
-    border-color: var(--sage);
-    color: var(--ink);
-  }
-
+  nav a:hover { color: var(--ink); }
   nav a.active {
-    background: var(--sage);
-    color: #fdfbf4;
-    border-color: var(--sage);
+    background: var(--paper-card);
+    color: var(--accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
 
   .card {
     background: var(--paper-card);
     border: 1px solid var(--line);
-    border-radius: var(--radius-lg);
-    padding: 24px;
+    border-radius: var(--radius-xl);
+    padding: 22px;
     margin-bottom: 16px;
-    box-shadow: 0 1px 2px rgba(43, 36, 32, 0.04);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 8px 24px rgba(0, 0, 0, 0.01);
   }
 
   .card h3 {
     font-family: 'Fraunces', Georgia, serif;
     font-weight: 600;
     font-size: 1.2rem;
+    margin-top: 0;
+    margin-bottom: 12px;
   }
 
   label {
     display: block;
-    font-size: 0.72rem;
+    font-size: 0.74rem;
     color: var(--ink-soft);
     margin-bottom: 8px;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-weight: 600;
+    letter-spacing: 0.06em;
+    font-weight: 700;
   }
 
   input[type=file], input[type=text], select {
@@ -207,19 +233,19 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
     color: var(--ink);
     border: 1.5px solid var(--line);
     border-radius: var(--radius-sm);
-    padding: 13px 14px;
+    padding: 14px 16px;
     font-size: 0.95rem;
     font-family: inherit;
     margin-bottom: 16px;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.2s ease;
   }
 
   input[type=file]::file-selector-button {
-    background: var(--clay-soft);
-    color: var(--clay);
+    background: var(--accent-soft);
+    color: var(--accent);
     border: none;
     padding: 8px 12px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-weight: 600;
     margin-right: 12px;
     cursor: pointer;
@@ -227,15 +253,16 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 
   input[type=text]:focus, input[type=file]:focus, select:focus {
     outline: none;
-    border-color: var(--sage);
-    box-shadow: 0 0 0 3px rgba(124, 138, 106, 0.18);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+    background: var(--paper-card);
   }
 
   button[type=submit], .btn-action {
-    background: var(--sage);
-    color: #fdfbf4;
+    background: var(--accent);
+    color: var(--paper-card);
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: 22px;
     padding: 14px 20px;
     font-weight: 600;
     font-size: 0.95rem;
@@ -243,45 +270,36 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
     cursor: pointer;
     width: 100%;
     text-decoration: none;
-    box-sizing: border-box;
-    transition: background 0.2s, transform 0.1s;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+    box-shadow: 0 4px 12px var(--accent-soft);
   }
 
-  button[type=submit]:hover, .btn-action:hover { background: var(--sage-ink); }
+  button[type=submit]:hover, .btn-action:hover { opacity: 0.92; }
   button[type=submit]:active, .btn-action:active { transform: scale(0.98); }
-
-  button[type=submit]:disabled {
-    opacity: 0.55;
-    cursor: default;
-  }
+  button[type=submit]:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
 
   .result {
-    border-left: 3px solid var(--clay);
-    animation: riseIn 0.35s ease;
+    border-left: 4px solid var(--accent);
+    animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  @keyframes riseIn {
+  @keyframes fadeIn {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: none; }
   }
 
-  .result h3 {
-    margin: 0 0 8px;
-    color: var(--ink);
-  }
-
   .meta {
-    color: var(--ink-soft);
-    font-size: 0.74rem;
+    color: var(--accent);
+    font-size: 0.75rem;
     margin-bottom: 14px;
-    font-weight: 500;
-    background: var(--clay-soft);
-    padding: 5px 10px;
-    border-radius: 6px;
+    font-weight: 600;
+    background: var(--accent-soft);
+    padding: 6px 10px;
+    border-radius: 8px;
     display: inline-block;
   }
 
@@ -294,26 +312,14 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
     line-height: 1.45;
   }
 
-  .err {
-    color: var(--danger);
-    font-weight: 600;
-    margin: 0;
-  }
-
-  pre {
-    white-space: pre-wrap;
-    font-family: inherit;
-    line-height: 1.6;
-    margin: 0;
-    font-size: 0.925rem;
-    color: var(--ink);
-  }
+  .err { color: var(--danger); font-weight: 600; margin: 0; }
+  pre { white-space: pre-wrap; font-family: inherit; line-height: 1.6; margin: 0; font-size: 0.925rem; }
 
   .thinking {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: var(--clay);
+    color: var(--accent);
     font-size: 0.9rem;
     font-weight: 600;
   }
@@ -322,21 +328,73 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    border: 2.5px solid var(--clay-soft);
-    border-top-color: var(--clay);
+    border: 2.5px solid var(--accent-soft);
+    border-top-color: var(--accent);
     animation: spin 0.8s linear infinite;
     flex: none;
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
-
   .thinking .t { font-variant-numeric: tabular-nums; }
+  .hint { font-size: 0.76rem; color: var(--ink-soft); margin-top: 8px; }
 
-  .hint {
-    font-size: 0.75rem;
-    color: var(--ink-soft);
-    margin-top: 8px;
+  /* Fleet Dashboard UI Elements */
+  .fleet-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
   }
+  .stat-box {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 10px 8px;
+    border-radius: var(--radius-sm);
+    text-align: center;
+  }
+  .stat-box .val { font-size: 1.2rem; font-weight: 700; color: var(--ink); }
+  .stat-box.low .val { color: #10b981; }
+  .stat-box.med .val { color: #f59e0b; }
+  .stat-box.high .val { color: #ef4444; }
+  .stat-box .lbl { font-size: 0.65rem; text-transform: uppercase; color: var(--ink-soft); font-weight: 700; margin-top: 2px; }
+
+  .timeline-bar {
+    height: 16px;
+    width: 100%;
+    background: var(--paper);
+    border-radius: 8px;
+    display: flex;
+    overflow: hidden;
+    margin: 10px 0 18px;
+    border: 1px solid var(--line);
+  }
+  .timeline-seg { height: 100%; flex: 1; }
+
+  .event-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; padding-right: 2px; }
+  .event-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .event-info { display: flex; flex-direction: column; gap: 3px; }
+  .event-time { font-size: 0.72rem; color: var(--ink-soft); font-weight: 700; }
+  .event-desc { font-size: 0.86rem; font-weight: 600; color: var(--ink); }
+  .badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .badge.low { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+  .badge.medium { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+  .badge.high { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
 </style></head><body>
 <header>
   <div class="brand-row">
@@ -361,9 +419,70 @@ PAGE_SCRIPT = """
       return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
     });
   }
-  function resultCard(data){
+
+  function renderFleetResult(data) {
+    if (data.error) {
+      return '<div class="card"><p class="err">' + escapeHtml(data.error) + '</p></div>';
+    }
+
+    var counts = data.chart.tier_counts || {low: 0, medium: 0, high: 0};
+    var timeline = data.chart.timeline || [];
+    var events = data.events || [];
+
+    var timelineHtml = '';
+    if (timeline.length > 0) {
+      timelineHtml = '<div class="timeline-bar">';
+      timeline.forEach(function(pt) {
+        var col = pt.tier === 'high' ? '#ef4444' : (pt.tier === 'medium' ? '#f59e0b' : '#10b981');
+        timelineHtml += '<div class="timeline-seg" style="background:' + col + ';" title="t=' + pt.t + 's (' + pt.tier + ')"></div>';
+      });
+      timelineHtml += '</div>';
+    }
+
+    var eventsHtml = '';
+    if (events.length > 0) {
+      var sortedEvents = events.slice().sort(function(a, b) {
+        return b.p - a.p;
+      }).slice(0, 15);
+
+      sortedEvents.forEach(function(ev) {
+        var topBehav = (ev.behaviors && ev.behaviors.length > 0) ? ev.behaviors[0] : ['unknown', 0];
+        var behavName = topBehav[0].replace(/-/g, ' ');
+        var conf = Math.round(topBehav[1] * 100);
+        eventsHtml += '<div class="event-card">' +
+          '<div class="event-info">' +
+            '<span class="event-time">t = ' + ev.t.toFixed(2) + 's</span>' +
+            '<span class="event-desc">Likely: ' + escapeHtml(behavName) + ' (' + conf + '%)</span>' +
+          '</div>' +
+          '<span class="badge ' + escapeHtml(ev.tier) + '">' + escapeHtml(ev.tier) + '</span>' +
+        '</div>';
+      });
+    } else {
+      eventsHtml = '<p class="hint">No high-risk events flagged in this trip segment.</p>';
+    }
+
+    return '<div class="card result">' +
+      '<h3>' + escapeHtml(data.title) + '</h3>' +
+      '<div class="meta">' + escapeHtml(data.meta) + '</div>' +
+      '<div class="fleet-stats">' +
+        '<div class="stat-box low"><div class="val">' + counts.low + '</div><div class="lbl">Low Risk</div></div>' +
+        '<div class="stat-box med"><div class="val">' + counts.medium + '</div><div class="lbl">Med Risk</div></div>' +
+        '<div class="stat-box high"><div class="val">' + counts.high + '</div><div class="lbl">High Risk</div></div>' +
+      '</div>' +
+      '<label>Trip Risk Timeline (' + data.chart.n_rows + ' data rows)</label>' +
+      timelineHtml +
+      '<label>Flagged Events (' + events.length + ' total)</label>' +
+      '<div class="event-list">' + eventsHtml + '</div>' +
+      '<div class="caveat">' + escapeHtml(data.caveat) + '</div>' +
+    '</div>';
+  }
+
+  function resultCard(data, isFleet){
     if (data.error){
       return '<div class="card"><p class="err">' + escapeHtml(data.error) + '</p></div>';
+    }
+    if (isFleet) {
+      return renderFleetResult(data);
     }
     return '<div class="card result">' +
       '<h3>' + escapeHtml(data.title) + '</h3>' +
@@ -372,23 +491,36 @@ PAGE_SCRIPT = """
       '<div class="caveat">' + escapeHtml(data.caveat) + '</div>' +
       '</div>';
   }
+
   document.querySelectorAll('form[data-pm]').forEach(function(form){
     var resultBox = document.getElementById(form.dataset.pm);
     var btn = form.querySelector('button');
     var btnLabel = btn.textContent;
+    var isFleet = form.action.includes('/fleet');
+
     form.addEventListener('submit', function(ev){
       ev.preventDefault();
       btn.disabled = true;
       var start = Date.now();
-      resultBox.innerHTML = '<div class="card">' +
-        '<div class="thinking"><span class="spinner"></span>' +
-        '<span>Thinking on-device <span class="t">0.0s</span></span></div>' +
-        '<div class="hint">A 1.5B model on this phone takes real time — no shortcuts, no cloud call.</div>' +
-        '</div>';
+
+      if (isFleet) {
+        resultBox.innerHTML = '<div class="card"><div class="thinking"><span class="spinner"></span><span>Replaying telemetry stream...</span></div></div>';
+      } else {
+        resultBox.innerHTML = '<div class="card">' +
+          '<div class="thinking"><span class="spinner"></span>' +
+          '<span>Thinking on-device <span class="t">0.0s</span></span></div>' +
+          '<div class="hint">A 1.5B model on this phone takes real time — no shortcuts, no cloud call.</div>' +
+          '</div>';
+      }
+
       var timerEl = resultBox.querySelector('.t');
-      var timer = setInterval(function(){
-        timerEl.textContent = fmtT((Date.now() - start) / 1000);
-      }, 100);
+      var timer = null;
+      if (timerEl) {
+        timer = setInterval(function(){
+          timerEl.textContent = fmtT((Date.now() - start) / 1000);
+        }, 100);
+      }
+
       var hasFile = form.querySelector('input[type=file]');
       var opts;
       if (hasFile){
@@ -398,14 +530,15 @@ PAGE_SCRIPT = """
           headers:{'X-Requested-With':'fetch','Content-Type':'application/x-www-form-urlencoded'},
           body:new URLSearchParams(new FormData(form)).toString()};
       }
+
       fetch(form.action, opts).then(function(r){ return r.json(); })
         .then(function(data){
-          clearInterval(timer);
-          resultBox.innerHTML = resultCard(data);
+          if (timer) clearInterval(timer);
+          resultBox.innerHTML = resultCard(data, isFleet);
           btn.disabled = false;
           btn.textContent = btnLabel;
         }).catch(function(e){
-          clearInterval(timer);
+          if (timer) clearInterval(timer);
           resultBox.innerHTML = '<div class="card"><p class="err">Request failed: ' +
             escapeHtml(String(e)) + '</p></div>';
           btn.disabled = false;
@@ -419,12 +552,13 @@ PAGE_SCRIPT = """
 PAGE_TAIL = "</body></html>"
 
 
-def render(body: str, active: str = "") -> bytes:
+def render(body: str, active: str = "", tool_theme: str = "") -> bytes:
     head = (PAGE_HEAD
             .replace("__NAV_HOME__", "active" if active == "home" else "")
             .replace("__NAV_AGRI__", "active" if active == "agri" else "")
             .replace("__NAV_LEARN__", "active" if active == "learn" else "")
             .replace("__NAV_FLEET__", "active" if active == "fleet" else ""))
+    head = head.replace("<body>", f'<body data-tool="{tool_theme}">')
     return (head + body + PAGE_SCRIPT + PAGE_TAIL).encode("utf-8")
 
 
@@ -446,35 +580,35 @@ def home_page() -> bytes:
   <a href="/fleet" class="btn-action">Open Fleet Risk</a>
 </div>
 """
-    return render(body, "home")
+    return render(body, "home", "home")
 
 
 def agrilens_form(result_html: str = "") -> bytes:
     body = f"""
 <div class="card">
   <form method="POST" action="/agrilens" enctype="multipart/form-data" data-pm="agrilens-result">
-    <label>Crop photo</label>
+    <label>Crop photo (chilli / tomato / maize)</label>
     <input type="file" name="photo" accept="image/*" capture="environment" required>
     <button type="submit">Analyze offline</button>
   </form>
 </div>
 <div id="agrilens-result">{result_html}</div>
 """
-    return render(body, "agri")
+    return render(body, "agri", "agri")
 
 
 def learnloop_form(result_html: str = "") -> bytes:
     body = f"""
 <div class="card">
   <form method="POST" action="/learnloop" data-pm="learnloop-result">
-    <label>Your question (Maths / Science / Social, class 8-10)</label>
+    <label>Your question (Maths / Science / Social)</label>
     <input type="text" name="question" placeholder="e.g. What is the Pythagoras theorem?" required>
     <button type="submit">Ask offline</button>
   </form>
 </div>
 <div id="learnloop-result">{result_html}</div>
 """
-    return render(body, "learn")
+    return render(body, "learn", "learn")
 
 
 def fleet_form(result_html: str = "") -> bytes:
@@ -483,15 +617,15 @@ def fleet_form(result_html: str = "") -> bytes:
     body = f"""
 <div class="card">
   <form method="POST" action="/fleet" data-pm="fleet-result">
-    <label>Recorded trip (accelerometer + gyroscope stream)</label>
+    <label>Recorded trip telemetry</label>
     <select name="trip">{options}</select>
     <button type="submit">Replay on-device</button>
   </form>
-  <p class="hint" style="margin-top:14px">Same raw IMU signal an ESP32 + MPU6050/9250 rig streams from the OBD2-adjacent sensor mount. Two-stage RandomForest, 30 trees each, no cloud call.</p>
+  <p class="hint">Two-stage RandomForest model running locally via Python inference.</p>
 </div>
 <div id="fleet-result">{result_html}</div>
 """
-    return render(body, "fleet")
+    return render(body, "fleet", "fleet")
 
 
 def _trip_label(fname: str) -> str:
