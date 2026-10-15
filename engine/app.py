@@ -37,7 +37,7 @@ sys.path.insert(0, str(ROOT_DIR / "vehicle-risk"))
 
 from retrieval import Retriever  # noqa: E402
 from llama_client import LlamaClient, build_prompt, LlamaServerError  # noqa: E402
-from infer import RiskModel, summarize_trip  # noqa: E402
+from infer import RiskModel, format_text, replay_trip_struct  # noqa: E402
 
 ADVICE_BANK = Retriever(sorted((ROOT_DIR / "advice_bank").glob("*.md")))
 LEARN_CONTENT = Retriever(sorted((ROOT_DIR / "learnloop").glob("content_*.md")))
@@ -674,15 +674,29 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         t0 = time.time()
-        answer = summarize_trip(RISK_MODEL, trip_path)
+        struct = replay_trip_struct(RISK_MODEL, trip_path)
         ms = int((time.time() - t0) * 1000)
         title = _trip_label(trip)
         meta = f"Replayed {trip} · 2-stage RandomForest (60 trees total) · {ms}ms · fully offline"
 
         if ajax:
-            self._send_json({"title": title, "meta": meta, "answer": answer, "caveat": CAVEAT_FLEET})
+            # chart/events: structured data for a frontend to actually plot
+            # (tier bar counts, a risk-over-time timeline, ranked event cards
+            # with the reasoning) instead of parsing the text log.
+            self._send_json({
+                "title": title, "meta": meta, "caveat": CAVEAT_FLEET,
+                "answer": format_text(struct),  # text fallback
+                "chart": {
+                    "n_rows": struct["n_rows"],
+                    "n_events": struct["n_events"],
+                    "tier_counts": struct["tier_counts"],
+                    "timeline": struct["timeline"],
+                },
+                "events": struct["events"],
+                "events_truncated": struct["events_truncated"],
+            })
         else:
-            self._send(fleet_form(result_card(title, meta, answer, CAVEAT_FLEET)))
+            self._send(fleet_form(result_card(title, meta, format_text(struct), CAVEAT_FLEET)))
 
 
 def _extract_multipart_file(raw: bytes, boundary: bytes, field_name: bytes) -> bytes | None:

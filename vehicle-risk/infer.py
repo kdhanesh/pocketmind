@@ -104,29 +104,64 @@ def replay_trip(model: RiskModel, csv_path: Path):
             yield idx, t, row, pred
 
 
-def summarize_trip(model: RiskModel, csv_path: Path, max_events_shown: int = 14) -> str:
-    """Compact text log of a full trip replay -- same shape the terminal
-    demo prints, formatted for the web result card."""
-    lines = []
+def replay_trip_struct(model: RiskModel, csv_path: Path, max_events: int = 40,
+                        timeline_points: int = 120) -> dict:
+    """Structured replay result -- same numbers summarize_trip()'s text log
+    uses, but as data a frontend can actually chart (bar counts, a
+    risk-over-time timeline, ranked event cards) instead of parsing text.
+    """
     n_rows = 0
     n_events = 0
     tier_counts = {"low": 0, "medium": 0, "high": 0}
-    shown = 0
+    events: list[dict] = []
+    timeline: list[dict] = []
+    total_rows = sum(1 for _ in open(csv_path)) - 1  # minus header
+    stride = max(1, total_rows // timeline_points)
+
     for idx, t, row, pred in replay_trip(model, csv_path):
         n_rows += 1
         tier_counts[pred["tier"]] += 1
         if pred["is_event"]:
             n_events += 1
-            if shown < max_events_shown:
-                top2 = ", ".join(f"{b} {p:.0%}" for b, p in pred["ranked"])
-                tag = {"low": " ", "medium": "!", "high": "!!"}[pred["tier"]]
-                lines.append(f"[{t:6.2f}s] {tag} RISK={pred['tier'].upper():6s} "
-                             f"(p={pred['event_proba']:.0%})  likely: {top2}")
-                shown += 1
-    if n_events > max_events_shown:
-        lines.append(f"... {n_events - max_events_shown} more flagged moments ...")
+            events.append({
+                "t": round(t, 2),
+                "tier": pred["tier"],
+                "p": round(pred["event_proba"], 3),
+                "behaviors": [[b, round(p, 3)] for b, p in pred["ranked"]],
+            })
+        if idx % stride == 0:
+            timeline.append({"t": round(t, 2), "tier": pred["tier"], "p": round(pred["event_proba"], 3)})
+
+    return {
+        "n_rows": n_rows,
+        "n_events": n_events,
+        "tier_counts": tier_counts,
+        "timeline": timeline,
+        "events": events[:max_events],
+        "events_truncated": max(0, n_events - max_events),
+    }
+
+
+def format_text(struct: dict, max_events_shown: int = 14) -> str:
+    """Renders a replay_trip_struct() result as the plain-text log shape
+    the terminal demo prints -- used as the non-JS fallback."""
+    lines = []
+    shown_events = struct["events"][:max_events_shown]
+    truncated = struct["events_truncated"] + max(0, len(struct["events"]) - max_events_shown)
+    for e in shown_events:
+        top2 = ", ".join(f"{b} {p:.0%}" for b, p in e["behaviors"])
+        tag = {"low": " ", "medium": "!", "high": "!!"}[e["tier"]]
+        lines.append(f"[{e['t']:6.2f}s] {tag} RISK={e['tier'].upper():6s} "
+                     f"(p={e['p']:.0%})  likely: {top2}")
+    if truncated:
+        lines.append(f"... {truncated} more flagged moments ...")
     lines.append("")
-    lines.append(f"{n_rows} samples replayed · {n_events} elevated-risk moments flagged "
-                 f"({tier_counts['high']} high, {tier_counts['medium']} medium) · "
-                 f"{tier_counts['low']} normal")
+    tc = struct["tier_counts"]
+    lines.append(f"{struct['n_rows']} samples replayed · {struct['n_events']} elevated-risk moments "
+                 f"flagged ({tc['high']} high, {tc['medium']} medium) · {tc['low']} normal")
     return "\n".join(lines)
+
+
+def summarize_trip(model: RiskModel, csv_path: Path, max_events_shown: int = 14) -> str:
+    """Convenience wrapper: replay a trip and format it as text in one call."""
+    return format_text(replay_trip_struct(model, csv_path, max_events=max_events_shown), max_events_shown)
