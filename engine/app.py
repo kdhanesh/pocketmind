@@ -45,6 +45,12 @@ LLAMA = LlamaClient()
 RISK_MODEL = RiskModel()
 SAMPLE_TRIPS_DIR = ROOT_DIR / "vehicle-risk" / "data" / "sample_trips"
 
+# Stress-test derived (2026-10-15): correct lab-photo classifications land
+# at 94-100% confidence; both real-world misclassifications and non-leaf
+# garbage input (tested: a photo of paper) land at 38-68%. See
+# BATTLE_TEST_REPORT.md.
+AGRI_CONFIDENCE_FLOOR = 0.70
+
 CAVEAT_AGRI = "Advice only. Confirm with your agriculture officer / KVK before acting."
 CAVEAT_LEARN = "Practice answer from LearnLoop — a prototype tutor. Confirm with your teacher."
 CAVEAT_FLEET = ("Behavior classifier, not a crash predictor — no public dataset pairs raw "
@@ -693,11 +699,34 @@ class Handler(BaseHTTPRequestHandler):
 
         cls_result = classify(tmp_path)
         label = cls_result["class_name"]
-        chunk = ADVICE_BANK.by_classifier_label(label)
+        confidence = cls_result["confidence"]
         classify_ms = int((time.time() - t0) * 1000)
 
+        # Found via stress-testing: the classifier is closed-set softmax --
+        # it has no "not a leaf" option, so literally any photo (a photo of
+        # paper, in one real test) gets forced into one of its ~38 disease
+        # classes. Stress-test data: correct lab-photo IDs land at 94-100%
+        # confidence; real-world misclassifications and non-leaf garbage
+        # both land at 38-68%. Below AGRI_CONFIDENCE_FLOOR, refuse to
+        # "diagnose" rather than assert a guess as if it were reliable.
+        if confidence < AGRI_CONFIDENCE_FLOOR:
+            title = "Not confident enough to diagnose"
+            meta = f"Closest guess: {label} · confidence {confidence:.0%} · classify {classify_ms}ms · fully offline"
+            answer = (f"The classifier's closest guess is \"{label}\" but at only {confidence:.0%} "
+                      f"confidence, which is too low to trust. This usually means the photo isn't a "
+                      f"single clear leaf (wrong subject, too blurry, too far away, bad light), or "
+                      f"it's a real condition this prototype wasn't trained to recognize. Retake with "
+                      f"one leaf filling the frame in good daylight, or try again.")
+            if ajax:
+                self._send_json({"title": title, "meta": meta, "answer": answer, "caveat": CAVEAT_AGRI})
+            else:
+                self._send(agrilens_form(result_card(title, meta, answer, CAVEAT_AGRI)))
+            return
+
+        chunk = ADVICE_BANK.by_classifier_label(label)
+
         if chunk is None:
-            answer = (f"Classifier result: {label} (confidence {cls_result['confidence']:.0%}). "
+            answer = (f"Classifier result: {label} (confidence {confidence:.0%}). "
                       f"No advice-bank entry for this exact class yet.")
             llm_ms = 0
         else:
@@ -714,7 +743,7 @@ class Handler(BaseHTTPRequestHandler):
             llm_ms = int((time.time() - t1) * 1000)
 
         title = chunk.title if chunk else label
-        meta = (f"Classifier: {label} · confidence {cls_result['confidence']:.0%} · "
+        meta = (f"Classifier: {label} · confidence {confidence:.0%} · "
                 f"classify {classify_ms}ms · SLM {llm_ms}ms · fully offline")
         if ajax:
             self._send_json({"title": title, "meta": meta, "answer": answer, "caveat": CAVEAT_AGRI})

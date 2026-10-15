@@ -42,8 +42,27 @@ class Chunk:
         return overlap / max(1, len(query_terms))
 
 
+# Found via stress-testing: without stopword filtering, a query like "what
+# is the capital of France" matched an unrelated "periodic table" chunk on
+# the single shared word "the" (score 1/4=0.25, clearing the 0.15
+# threshold) -- and the model then answered from its own general knowledge
+# instead of saying "no match," which is exactly the grounding guarantee
+# this whole project depends on. Filtering common function words before
+# scoring means an overlap has to be on an actual topic word.
+_STOPWORDS = {
+    "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has",
+    "have", "he", "in", "is", "it", "its", "of", "on", "that", "the", "to",
+    "was", "were", "will", "with", "what", "which", "who", "whom", "whose",
+    "this", "these", "those", "do", "does", "did", "can", "could", "should",
+    "would", "you", "your", "i", "we", "our", "they", "their", "them",
+    "but", "or", "if", "not", "no", "so", "me", "my", "about", "how",
+    "when", "where", "why", "please", "tell", "explain", "know",
+}
+
+
 def _tokenize(text: str) -> set:
-    return {w for w in re.findall(r"[a-zA-Z0-9']+", text.lower()) if len(w) > 2}
+    return {w for w in re.findall(r"[a-zA-Z0-9']+", text.lower())
+            if len(w) > 2 and w not in _STOPWORDS}
 
 
 def parse_markdown_bank(path: Path) -> list[Chunk]:
