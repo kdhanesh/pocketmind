@@ -49,68 +49,303 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>PocketMind — VYOMAA LABS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#16241c; --bg2:#1f3327; --bg3:#263d2f;
-    --clay:#d98a5f; --clay-dark:#1b2a21;
-    --sage:#8fb996; --fern:#4f7a5c;
-    --fg:#f2ede4; --muted:#a7bcac; --line:#324a3a;
-    --err:#e8927a;
-    --radius:16px;
+  :root {
+    --soil-dark: #121c15;
+    --soil-card: #1a291f;
+    --soil-border: #294231;
+    --leaf-primary: #347d47;
+    --leaf-hover: #2d6b3d;
+    --accent-gold: #e6a15c;
+    --text-main: #f3f6f3;
+    --text-muted: #94a899;
+    --danger: #e06c57;
+    --badge-bg: rgba(230, 161, 92, 0.15);
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
   }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-  html,body{height:100%}
-  body{background:
-       radial-gradient(60vw 40vh at 100% -10%, rgba(143,185,150,.14), transparent 60%),
-       radial-gradient(70vw 50vh at -10% 110%, rgba(217,138,95,.10), transparent 60%),
-       var(--bg);
-       color:var(--fg); font-family:'Roboto',system-ui,-apple-system,Segoe UI,sans-serif;
-       margin:0; padding:22px 18px 40px; max-width:640px; margin-inline:auto}
-  h1{font-size:1.5rem; font-weight:900; margin:0 0 4px; letter-spacing:-.01em}
-  .sub{color:var(--muted); font-size:.88rem; margin-bottom:20px; line-height:1.4}
-  .badge{display:inline-block; background:var(--clay); color:var(--clay-dark); font-weight:700;
-         font-size:.66rem; padding:3px 9px; border-radius:20px; letter-spacing:.05em; vertical-align:2px}
-  nav{display:flex; gap:8px; margin-bottom:22px}
-  nav a{flex:1; text-align:center; color:var(--fg); text-decoration:none; background:var(--bg2);
-        padding:11px 10px; border-radius:12px; border:1px solid var(--line); font-size:.9rem;
-        font-weight:500; transition:background .15s, transform .1s, border-color .15s}
-  nav a:active{transform:scale(.97)}
-  nav a.active{background:var(--clay); color:var(--clay-dark); font-weight:700; border-color:var(--clay)}
-  .card{background:var(--bg2); border:1px solid var(--line); border-radius:var(--radius);
-        padding:20px; margin-bottom:16px; box-shadow:0 6px 20px rgba(0,0,0,.18)}
-  .card h3{margin-top:0}
-  label{display:block; font-size:.78rem; color:var(--sage); margin-bottom:8px;
-        text-transform:uppercase; letter-spacing:.06em; font-weight:700}
-  input[type=file],input[type=text],select,textarea{
-    width:100%; background:var(--bg); color:var(--fg); border:1.5px solid var(--line);
-    border-radius:11px; padding:12px; font-size:1rem; font-family:inherit; margin-bottom:14px;
-    transition:border-color .15s}
-  input[type=text]:focus{outline:none; border-color:var(--sage)}
-  button{background:var(--clay); color:var(--clay-dark); border:none; border-radius:11px;
-         padding:13px 20px; font-weight:700; font-size:.98rem; font-family:inherit; cursor:pointer;
-         width:100%; transition:transform .1s, opacity .15s; display:flex; align-items:center;
-         justify-content:center; gap:10px}
-  button:active{transform:scale(.98)}
-  button:disabled{opacity:.6; cursor:default}
-  .result{border-left:4px solid var(--clay); padding:18px 18px 18px 16px; margin-top:4px;
-          animation:riseIn .35s ease}
-  @keyframes riseIn{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
-  .result h3{margin:0 0 6px; font-size:1.1rem; color:var(--fg)}
-  .meta{color:var(--sage); font-size:.76rem; margin-bottom:12px; font-weight:500}
-  .caveat{margin-top:16px; font-size:.78rem; color:var(--muted); border-top:1px solid var(--line);
-          padding-top:12px; line-height:1.4}
-  .err{color:var(--err)}
-  pre{white-space:pre-wrap; font-family:inherit; line-height:1.55; margin:0; font-size:.96rem}
-  .thinking{display:flex; align-items:center; gap:12px; color:var(--sage); font-size:.9rem; font-weight:500}
-  .spinner{width:18px; height:18px; border-radius:50%; border:2.5px solid var(--line);
-           border-top-color:var(--sage); animation:spin .8s linear infinite; flex:none}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .thinking .t{font-variant-numeric:tabular-nums}
-  .hint{font-size:.72rem; color:var(--muted); margin-top:6px}
+
+  *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body { height: 100%; }
+
+  body {
+    background-color: var(--soil-dark);
+    background-image:
+      radial-gradient(circle at 100% 0%, rgba(52, 125, 71, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 0% 100%, rgba(230, 161, 92, 0.08) 0%, transparent 50%);
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 24px 16px 48px;
+    max-width: 480px;
+    margin-inline: auto;
+    line-height: 1.5;
+  }
+
+  header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .brand-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  h1 {
+    font-size: 1.625rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+  }
+
+  .offline-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--badge-bg);
+    color: var(--accent-gold);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 30px;
+    letter-spacing: 0.04em;
+    border: 1px solid rgba(230, 161, 92, 0.3);
+  }
+
+  .offline-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background-color: var(--accent-gold);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent-gold);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .sub {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  nav {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    background: rgba(26, 41, 31, 0.6);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--soil-border);
+    margin-bottom: 24px;
+  }
+
+  nav a {
+    text-align: center;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 10px 8px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  nav a:hover {
+    color: var(--text-main);
+  }
+
+  nav a.active {
+    background: var(--leaf-primary);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(52, 125, 71, 0.3);
+  }
+
+  .card {
+    background: var(--soil-card);
+    border: 1px solid var(--soil-border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  }
+
+  label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+  }
+
+  input[type=file], input[type=text] {
+    width: 100%;
+    background: var(--soil-dark);
+    color: var(--text-main);
+    border: 1.5px solid var(--soil-border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    margin-bottom: 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  input[type=file]::file-selector-button {
+    background: var(--soil-border);
+    color: var(--text-main);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-right: 12px;
+    cursor: pointer;
+  }
+
+  input[type=text]:focus, input[type=file]:focus {
+    outline: none;
+    border-color: var(--leaf-primary);
+    box-shadow: 0 0 0 3px rgba(52, 125, 71, 0.2);
+  }
+
+  button[type=submit], .btn-action {
+    background: var(--leaf-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 14px 20px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(52, 125, 71, 0.3);
+  }
+
+  button[type=submit]:active, .btn-action:active {
+    transform: scale(0.98);
+  }
+
+  button[type=submit]:disabled {
+    opacity: 0.6;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  .result {
+    border-left: 4px solid var(--accent-gold);
+    animation: riseIn 0.35s ease;
+  }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .result h3 {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  .meta {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    margin-bottom: 14px;
+    font-weight: 500;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 6px 10px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  .caveat {
+    margin-top: 16px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--soil-border);
+    padding-top: 12px;
+    line-height: 1.4;
+  }
+
+  .err {
+    color: var(--danger);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  pre {
+    white-space: pre-wrap;
+    font-family: inherit;
+    line-height: 1.6;
+    margin: 0;
+    font-size: 0.925rem;
+    color: var(--text-main);
+  }
+
+  .thinking {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--accent-gold);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(230, 161, 92, 0.2);
+    border-top-color: var(--accent-gold);
+    animation: spin 0.8s linear infinite;
+    flex: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .thinking .t {
+    font-variant-numeric: tabular-nums;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
 </style></head><body>
-<h1>PocketMind <span class="badge">ON-DEVICE DEMO</span></h1>
-<div class="sub">VYOMAA LABS — running fully offline on this phone, no cloud call</div>
+<header>
+  <div class="brand-row">
+    <h1>PocketMind</h1>
+    <div class="offline-badge">100% ON-DEVICE</div>
+  </div>
+  <p class="sub">VYOMAA LABS — Zero cloud calls, runs locally via Termux</p>
+</header>
 <nav>
   <a href="/" class="__NAV_HOME__">Home</a>
   <a href="/agrilens" class="__NAV_AGRI__">AgriLens</a>
@@ -196,13 +431,13 @@ def home_page() -> bytes:
     body = """
 <div class="card">
   <h3 style="margin-top:0">AgriLens</h3>
-  <p class="meta" style="color:var(--muted)">Point a camera at a chilli, tomato, or maize leaf. Get an offline health read.</p>
-  <a href="/agrilens"><button type="button" style="width:auto; display:inline-flex">Open AgriLens</button></a>
+  <p class="meta" style="font-family:inherit; display:block; background:none; padding:0">Point a camera at a chilli, tomato, or maize leaf. Get an offline health read.</p>
+  <a href="/agrilens"><button type="button" class="btn-action">Open AgriLens</button></a>
 </div>
 <div class="card">
   <h3 style="margin-top:0">LearnLoop</h3>
-  <p class="meta" style="color:var(--muted)">Ask a class 8-10 Maths, Science, or Social question. Get a plain-language explanation.</p>
-  <a href="/learnloop"><button type="button" style="width:auto; display:inline-flex">Open LearnLoop</button></a>
+  <p class="meta" style="font-family:inherit; display:block; background:none; padding:0">Ask a class 8-10 Maths, Science, or Social question. Get a plain-language explanation.</p>
+  <a href="/learnloop"><button type="button" class="btn-action">Open LearnLoop</button></a>
 </div>
 """
     return render(body, "home")
