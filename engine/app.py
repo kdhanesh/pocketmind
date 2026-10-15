@@ -73,38 +73,6 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
     --radius-sm: 12px;
   }
 
-  body[data-tool="agri"] {
-    --paper: #f3f6f0;
-    --paper-card: #fbfff8;
-    --ink: #19261c;
-    --ink-soft: #546657;
-    --line: #d8e6d9;
-    --accent: #3d6b47;
-    --accent-soft: #e7f2e9;
-  }
-
-  body[data-tool="learn"] {
-    --paper: #f1f4f9;
-    --paper-card: #ffffff;
-    --ink: #141c2e;
-    --ink-soft: #526075;
-    --line: #d3e1f0;
-    --accent: #2b5c8f;
-    --accent-soft: #e5f0fb;
-  }
-
-  body[data-tool="fleet"] {
-    --paper: #0f1318;
-    --paper-card: #182028;
-    --ink: #edf2f7;
-    --ink-soft: #8494a7;
-    --line: #263240;
-    --accent: #f59e0b;
-    --accent-soft: rgba(245, 158, 11, 0.12);
-    --clay: #ef4444;
-    --danger: #ef4444;
-  }
-
   *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
 
@@ -353,9 +321,9 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
     text-align: center;
   }
   .stat-box .val { font-size: 1.2rem; font-weight: 700; color: var(--ink); }
-  .stat-box.low .val { color: #10b981; }
-  .stat-box.med .val { color: #f59e0b; }
-  .stat-box.high .val { color: #ef4444; }
+  .stat-box.low .val { color: var(--accent); }
+  .stat-box.med .val { color: var(--clay); }
+  .stat-box.high .val { color: var(--danger); }
   .stat-box .lbl { font-size: 0.65rem; text-transform: uppercase; color: var(--ink-soft); font-weight: 700; margin-top: 2px; }
 
   .timeline-bar {
@@ -392,9 +360,9 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
     border-radius: 6px;
     white-space: nowrap;
   }
-  .badge.low { background: rgba(16, 185, 129, 0.12); color: #10b981; }
-  .badge.medium { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-  .badge.high { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+  .badge.low { background: var(--accent-soft); color: var(--accent); }
+  .badge.medium { background: rgba(166, 93, 55, 0.12); color: var(--clay); }
+  .badge.high { background: rgba(179, 63, 50, 0.12); color: var(--danger); }
 </style></head><body>
 <header>
   <div class="brand-row">
@@ -433,7 +401,7 @@ PAGE_SCRIPT = """
     if (timeline.length > 0) {
       timelineHtml = '<div class="timeline-bar">';
       timeline.forEach(function(pt) {
-        var col = pt.tier === 'high' ? '#ef4444' : (pt.tier === 'medium' ? '#f59e0b' : '#10b981');
+        var col = pt.tier === 'high' ? 'var(--danger)' : (pt.tier === 'medium' ? 'var(--clay)' : 'var(--accent)');
         timelineHtml += '<div class="timeline-seg" style="background:' + col + ';" title="t=' + pt.t + 's (' + pt.tier + ')"></div>';
       });
       timelineHtml += '</div>';
@@ -552,13 +520,12 @@ PAGE_SCRIPT = """
 PAGE_TAIL = "</body></html>"
 
 
-def render(body: str, active: str = "", tool_theme: str = "") -> bytes:
+def render(body: str, active: str = "") -> bytes:
     head = (PAGE_HEAD
             .replace("__NAV_HOME__", "active" if active == "home" else "")
             .replace("__NAV_AGRI__", "active" if active == "agri" else "")
             .replace("__NAV_LEARN__", "active" if active == "learn" else "")
             .replace("__NAV_FLEET__", "active" if active == "fleet" else ""))
-    head = head.replace("<body>", f'<body data-tool="{tool_theme}">')
     return (head + body + PAGE_SCRIPT + PAGE_TAIL).encode("utf-8")
 
 
@@ -580,7 +547,7 @@ def home_page() -> bytes:
   <a href="/fleet" class="btn-action">Open Fleet Risk</a>
 </div>
 """
-    return render(body, "home", "home")
+    return render(body, "home")
 
 
 def agrilens_form(result_html: str = "") -> bytes:
@@ -594,7 +561,7 @@ def agrilens_form(result_html: str = "") -> bytes:
 </div>
 <div id="agrilens-result">{result_html}</div>
 """
-    return render(body, "agri", "agri")
+    return render(body, "agri")
 
 
 def learnloop_form(result_html: str = "") -> bytes:
@@ -608,7 +575,7 @@ def learnloop_form(result_html: str = "") -> bytes:
 </div>
 <div id="learnloop-result">{result_html}</div>
 """
-    return render(body, "learn", "learn")
+    return render(body, "learn")
 
 
 def fleet_form(result_html: str = "") -> bytes:
@@ -625,7 +592,7 @@ def fleet_form(result_html: str = "") -> bytes:
 </div>
 <div id="fleet-result">{result_html}</div>
 """
-    return render(body, "fleet", "fleet")
+    return render(body, "fleet")
 
 
 def _trip_label(fname: str) -> str:
