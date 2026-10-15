@@ -1,8 +1,8 @@
-# Battle-test report — PocketMind, 2026-10-15
+# Battle-test report — PocketMind, 2026-10-15 (updated 2026-10-16)
 
 Stress and adversarial testing run against the live app on the actual
-physical phone (Redmi 24116RNC1I), not a laptop simulation. Three real
-bugs were found and fixed during this pass — this report covers what was
+physical phone (Redmi 24116RNC1I), not a laptop simulation. Four real
+bugs were found and fixed across this pass — this report covers what was
 tested, what broke, what was fixed, and what's still honestly unresolved.
 
 ## Summary
@@ -12,8 +12,9 @@ tested, what broke, what was fixed, and what's still honestly unresolved.
 | 1 | AgriLens: no "not a leaf" rejection — any image forces a diagnosis | High (credibility) | **Fixed** |
 | 2 | LearnLoop: stopword-only matches hand the model an unrelated note, which it then answers from general knowledge instead of refusing | High (breaks the core grounding guarantee) | **Fixed** |
 | 3 | Fleet Risk: path traversal / arbitrary file read via the `trip` parameter | Medium (local-only server, but real) | **Fixed** |
-| 4 | LearnLoop latency creeps from ~15s (single-shot) to 38-55s under repeated back-to-back calls | Low (still well within demo tolerance) | Documented, not a bug |
-| 5 | SLM occasionally repeats itself verbatim under certain prompts (0.5B model, no repeat penalty set) | Low (cosmetic) | Documented, candidate fix below |
+| 4 | AgriLens: multipart upload parser truncated large photos whose binary bytes happened to contain the boundary substring | High (silently broke real uploads) | **Fixed** |
+| 5 | LearnLoop latency creeps from ~15s (single-shot) to 38-55s under repeated back-to-back calls | Low (still well within demo tolerance) | Documented, not a bug |
+| 6 | SLM occasionally repeats itself verbatim under certain prompts (0.5B model, no repeat penalty set) | Low (cosmetic) | Documented, candidate fix below |
 
 ---
 
@@ -182,7 +183,48 @@ fixing regardless of today's exposure.
 
 ---
 
-## 4. System resources under load
+## 4. AgriLens — multipart upload truncation (found 2026-10-16, re-recording the demo)
+
+### Method
+Re-recording the AgriLens demo video surfaced a real upload failure:
+submitting a real photo through the actual Chrome UI returned `Server
+error: Truncated File Read` from PIL, not a classifier result.
+
+### The real bug
+`_extract_multipart_file()` in `engine/app.py` found the upload's file
+field with `raw.split(b"--" + boundary)` — splitting the *entire* raw
+request body, image bytes included, on every occurrence of the bare
+boundary substring. A real JPEG is high-entropy binary data; on a file
+large enough, the boundary's own bytes turn up by chance inside the
+image itself, and `split()` treated that as a part delimiter — silently
+truncating the file mid-upload before it ever reached the classifier.
+
+Separately, Android's modern Photo Picker (what `accept="image/*"`
+routes to) served a corrupted ~14KB proxy instead of the actual file for
+at least one image during this testing — a device/Chrome-side issue, not
+this app's code, but worth knowing: the Picker is not guaranteed to hand
+back the original bytes.
+
+### Fix
+Rewrote `_extract_multipart_file()` to scan with `find()` instead of
+`split()`, requiring the delimiter to be preceded by its own `\r\n` —
+`\r\n--boundary`, which only a real multipart boundary has — before
+treating it as a part break. Verified with a synthetic 650KB payload
+built to contain the bare boundary substring inside its binary body: the
+old parser truncated it, the new one extracts the full, correct bytes.
+Re-verified against the live phone with a 4.1MB real photo (previously
+the exact file that triggered the bug): classifies correctly at 100%
+confidence, full file received (`Content-Length` and bytes-extracted now
+match exactly).
+
+### Also found, not fixed (low priority)
+- Android's Photo Picker occasionally serving undersized/corrupted
+  proxies for `accept="image/*"` inputs is outside this app's control;
+  worth knowing if a future demo recording hits the same picker UI.
+
+---
+
+## 5. System resources under load
 
 | Metric | Before stress testing | After |
 |---|---|---|
@@ -196,7 +238,7 @@ No thermal buildup, no memory leak signature across the full test battery
 
 ---
 
-## 5. Offline / airplane-mode proof (previously pending, now done)
+## 6. Offline / airplane-mode proof (previously pending, now done)
 
 WiFi was explicitly disabled (`svc wifi disable`, confirmed via `dumpsys
 wifi` → "Wi-Fi is disabled") and airplane mode flagged on in system

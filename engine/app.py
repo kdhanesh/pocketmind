@@ -842,18 +842,35 @@ def _extract_multipart_file(raw: bytes, boundary: bytes, field_name: bytes) -> b
     Avoids the `cgi` module on purpose (deprecated/removed in newer Python,
     and Termux's Python version shouldn't be a gamble for something this
     small to hand-roll).
+
+    Finds boundaries with find()/next-boundary scanning instead of
+    `raw.split(b"--" + boundary)` -- a real photo's binary bytes can contain
+    that bare substring by chance (hit in stress-testing on a >1MB JPEG),
+    which split() treated as a part delimiter and silently truncated the
+    file mid-upload. Requiring the delimiter to be preceded by its own
+    CRLF (`\r\n--boundary`, which only a real multipart boundary has) makes
+    an accidental match astronomically less likely.
     """
-    parts = raw.split(b"--" + boundary)
-    for part in parts:
-        if (b'name="' + field_name + b'"') not in part:
-            continue
-        header_end = part.find(b"\r\n\r\n")
+    delim = b"--" + boundary
+    pos = 0
+    while True:
+        start = raw.find(delim, pos)
+        if start == -1:
+            return None
+        part_start = start + len(delim)
+        if raw[part_start:part_start + 2] == b"--":
+            return None  # closing boundary, no more parts
+        header_end = raw.find(b"\r\n\r\n", part_start)
         if header_end == -1:
-            continue
-        body = part[header_end + 4:]
-        if body.endswith(b"\r\n"):
-            body = body[:-2]
-        return body
+            return None
+        body_start = header_end + 4
+        next_boundary = raw.find(b"\r\n" + delim, body_start)
+        if next_boundary == -1:
+            return None
+        header = raw[part_start:header_end]
+        if (b'name="' + field_name + b'"') in header:
+            return raw[body_start:next_boundary]
+        pos = next_boundary + 2
     return None
 
 

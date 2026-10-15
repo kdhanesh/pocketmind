@@ -11,9 +11,10 @@ accident-risk classifier from accelerometer data, see `vehicle-risk/`).
 See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the full system design,
 **[BENCHMARKS.md](BENCHMARKS.md)** for real, measured on-device numbers,
 and **[BATTLE_TEST_REPORT.md](BATTLE_TEST_REPORT.md)** for stress/
-adversarial testing on the live phone — including two real bugs this
+adversarial testing on the live phone — including three real bugs this
 found and fixed (a classifier confidence gap, a retrieval precision bug
-that let the model answer off its own knowledge instead of refusing) and
+that let the model answer off its own knowledge instead of refusing, and
+a multipart upload parser that silently truncated large photos) and
 one security fix (a path-traversal bug in Fleet Risk).
 
 Not using vLLM or LangGraph: vLLM needs a CUDA GPU and real RAM/VRAM — it
