@@ -797,11 +797,18 @@ class Handler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length).decode("utf-8", errors="replace")
         fields = parse_qs(raw)
         trip = (fields.get("trip") or [""])[0].strip()
-        trip_path = SAMPLE_TRIPS_DIR / trip
-        if not trip or not trip_path.is_file():
+        # Found via battle-testing: pathlib's `/` operator silently discards
+        # the base when the right side is an absolute path, so a naive
+        # `SAMPLE_TRIPS_DIR / trip` let `trip=/data/.../engine/app.py`
+        # escape the sample-trips directory entirely and get opened as if
+        # it were a CSV. Whitelist against the real directory listing
+        # instead of trusting the client-supplied path at all.
+        valid_trips = {p.name for p in SAMPLE_TRIPS_DIR.glob("*.csv")}
+        if not trip or trip not in valid_trips:
             msg = "Pick a recorded trip first."
             self._send_json({"error": msg}, 400) if ajax else self._send(fleet_form(error_card(msg)), 400)
             return
+        trip_path = SAMPLE_TRIPS_DIR / trip
 
         t0 = time.time()
         struct = replay_trip_struct(RISK_MODEL, trip_path)
