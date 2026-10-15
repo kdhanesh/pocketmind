@@ -1,103 +1,147 @@
-# Prompt to paste into Gemini — copy everything below the line
+Paste everything below this line into Gemini (or Claude, or GPT — any model
+good at visual design) to get a GUI redesign for PocketMind, the offline
+on-device demo app for VYOMAA LABS' DPIIT filing.
 
 ---
 
-I'm building "PocketMind," an on-device AI demo for an Indian startup
-(VYOMAA LABS) that is being used as proof for a government (DPIIT)
-startup filing and for investor demos. It runs **100% offline** on an
-Android phone — no cloud, no internet — via a small local language model
-(Qwen2.5, served by llama.cpp's `llama-server`) and a tiny Python web
-server (stdlib `http.server`, no framework) that the phone's own browser
-opens at `http://127.0.0.1:8090`.
+I'm building the GUI for "PocketMind" — a demo Android app (runs as a local
+web page in Chrome, served from a Python process in Termux, 100% offline,
+no cloud calls ever) that bundles three separate on-device AI tools. This
+is going in a hackathon demo video and in front of investors, so it needs
+to look genuinely polished and distinct per tool — not one reskinned theme
+repeated three times with different labels.
 
-It has two tools:
-1. **AgriLens** — photograph a crop leaf, get an offline disease diagnosis
-   + plain-language advice.
-2. **LearnLoop** — type a Class 8-10 school question (Maths/Science/Social),
-   get an offline, plain-language tutor explanation.
+**The three tools, and the visual identity each one needs:**
 
-**I need you to redesign the GUI.** My own hand-rolled CSS wasn't good
-enough — I want something that actually looks professional and polished,
-with a genuine **organic / nature-inspired visual identity** (this is a
-farm/agriculture + rural-education product), good typography, and real
-interactivity — not a template that looks like a generic form.
+1. **AgriLens** — a farmer photographs a crop leaf (chilli/tomato/maize),
+   an on-device image classifier IDs the disease, and a small language
+   model explains it in plain language. Visual identity: organic,
+   earthy, grounded — this one can lean into natural/plant motifs (leaf
+   shapes, soil tones, a "scan frame" around the photo upload).
+2. **LearnLoop** — a student types a Class 8-10 Maths/Science/Social
+   question, the app matches it to verified textbook content and a
+   small model explains it like a patient tutor. Visual identity:
+   academic, calm, legible — think a well-designed study app or a nice
+   notebook, not the same leaf/soil palette as AgriLens. Should feel
+   distinct from AgriLens even though it shares the same page shell.
+3. **Fleet Risk** — replays a real recorded vehicle trip (accelerometer +
+   gyroscope stream, the same signal an ESP32 + IMU rig mounted near a
+   car's OBD2 port would produce) through an on-device two-stage
+   RandomForest model, which flags moments of elevated accident risk and
+   explains *why* (which driving behavior it thinks it detected: sudden
+   braking, sudden acceleration, a sharp lane change, etc.). Visual
+   identity: this one should look like a **real telemetry/dashboard
+   view** — a bar chart of risk-tier counts (low/medium/high), a
+   timeline strip showing risk level over the course of the trip, and a
+   list of flagged moments styled as highlighted event cards (timestamp,
+   risk tier, confidence, and the "likely behavior" reasoning) — NOT a
+   wall of monospace text. This is the one place in the whole app that
+   should look like a dashboard instead of a form.
 
-## Hard requirements (don't break these — the Python backend depends on them)
+All three share one page shell (a header with the "PocketMind" wordmark
+and a small "100% on-device / no cloud" badge, plus a 4-way nav: Home,
+AgriLens, LearnLoop, Fleet Risk) but each tool's own content area should
+read as its own distinct environment within that shared shell — like three
+well-designed sections of one product, not one template with swapped text.
 
-The backend is fixed; you're only producing the **HTML + CSS + JS**, which
-I will slot back into Python string templates. Please give me:
+**Hard technical constraints (don't break these):**
 
-1. A **shared page shell** (head/nav/style) used by all 3 pages (Home,
-   AgriLens, LearnLoop).
-2. Each page's **body markup**.
-3. **One shared `<script>` block** (vanilla JS, no framework/build step —
-   this is served by a stdlib Python server on a phone with no build
-   tooling) implementing the interactive behavior below.
+- Output plain HTML + CSS + vanilla JS only. No build step, no React/Vue,
+  no npm. This gets pasted into Python string literals and served as-is
+  by a stdlib `http.server` — nothing compiles it.
+- **No external CDN scripts or stylesheets of any kind — including chart
+  libraries (no Chart.js, no D3, nothing from a CDN).** The entire point
+  of this demo is that it works with the phone in airplane mode. A chart
+  library loaded from a CDN would silently break (or worse, silently
+  degrade) the one claim this demo exists to prove. Draw the Fleet Risk
+  bar chart and timeline with plain CSS (div widths/heights as bars) or
+  inline SVG you generate in JS from the JSON data below. Fonts: if you
+  want custom fonts, either inline a `@font-face` with a data URI, or
+  stick to system fonts — same CDN restriction applies to Google Fonts
+  (it's loaded with a `<link>` currently, which does hit a network
+  request on first load; flag this to me as a tradeoff if you keep it
+  rather than silently deciding).
+- Forms submit via `fetch()`, not a real page navigation, so the page can
+  show a live state while waiting. **AgriLens and LearnLoop calls take
+  15-85 real seconds** (an on-device language model is actually running —
+  show a live elapsed-time counter, not a fake spinner, so it reads as
+  honest rather than broken). **Fleet Risk replies in under 300ms** (it's
+  a small decision-tree walk, not a language model) — don't put a long
+  "thinking" animation on it, a brief instant transition is more honest
+  and more impressive.
+- Multipart vs. urlencoded matters: AgriLens's form has a file input and
+  must submit as `multipart/form-data` (plain `fetch(url, {body: new
+  FormData(form)})` already does this correctly). LearnLoop and Fleet
+  Risk have no file input and must submit as
+  `application/x-www-form-urlencoded` — `fetch` does NOT do this
+  automatically for a FormData body, so you need:
+  ```js
+  body: new URLSearchParams(new FormData(form)).toString()
+  // with header 'Content-Type': 'application/x-www-form-urlencoded'
+  ```
+  Keep this branch (file input present → FormData; absent → urlencoded)
+  if you restructure the JS — this exact bug broke LearnLoop once before.
+- Every fetch POST must send the header `X-Requested-With: fetch` — the
+  server uses this to decide whether to return JSON (fetch path) or a
+  full HTML page (plain-form fallback with JS disabled). Keep that
+  header on every submit.
+- Escape all server-returned text before inserting into the DOM (it's
+  model output / user input — never use raw string concatenation into
+  innerHTML without escaping).
 
-### Pages & routes (don't change these)
-- `GET /` → Home, with two cards/buttons linking to `/agrilens` and `/learnloop`.
-- `GET /agrilens` → a page with a `<form>` containing a single
-  `<input type="file" name="photo" accept="image/*" capture="environment">`
-  and a submit button, plus a result area.
-- `GET /learnloop` → a page with a `<form>` containing a single
-  `<input type="text" name="question">` and a submit button, plus a result area.
+**The exact JSON each endpoint returns on a `fetch` POST** (design your
+result UI around these real shapes — don't invent fields that aren't
+here):
 
-### Interactive behavior (must keep working)
-- Forms submit via `fetch()`, **not** a page reload (preventDefault on submit).
-- The AgriLens form sends `multipart/form-data` (it has a file). The
-  LearnLoop form sends `application/x-www-form-urlencoded` body built from
-  its FormData (it's text-only) — **this distinction matters, mixing it up
-  breaks the backend's parsing**, so keep two code paths in the submit
-  handler, picked by whether the form has a file input.
-- Both requests must send header `X-Requested-With: fetch` (the backend
-  uses this to decide JSON vs full-page response).
-- On submit: disable the button, show a "thinking" state with a spinner
-  **and a live elapsed-time counter** (e.g. "Thinking on-device 12.3s") —
-  **real responses take 15-85 seconds on this phone**, so a frozen page or
-  a fake fast spinner would look broken/dishonest in a live demo. The
-  counter must keep ticking for the full wait, not just show a static label.
-- On success, the server returns JSON: `{title, meta, answer, caveat}`.
-  Render it as a result card: title (heading), meta (small, e.g.
-  "Classifier: X · confidence 97% · 820ms · fully offline" — a stats/benchmark
-  line, make it legible, this is a selling point not an afterthought),
-  answer (body text, preserve line breaks), caveat (small disclaimer text).
-- On error, the server returns JSON: `{error}`. Render it as a visible
-  error state (not just console.error).
-- All dynamic text must be HTML-escaped before insertion (no `data.answer`
-  etc. raw into innerHTML) — basic XSS hygiene.
-- Keep stable container ids/selectors my Python code can target
-  (`id="agrilens-result"`, `id="learnloop-result"`, or similar — just tell
-  me what you used).
+`POST /agrilens` and `POST /learnloop` both return either:
+```json
+{"title": "string", "meta": "string (classifier info / match info + timing)",
+ "answer": "string (the plain-language explanation, can be multi-sentence)",
+ "caveat": "string (one line, e.g. 'confirm with your KVK')}
+```
+or on error: `{"error": "string"}`
 
-### Visual/UX requirements
-- **Organic, nature-grounded palette** — think living plant, soil, canopy
-  light, not corporate SaaS blue. Real typographic hierarchy, generous
-  spacing, considered motion (subtle, not gimmicky).
-- Roboto was my previous choice but **you pick the best pairing** for this
-  feel if you have a better idea — just load it from Google Fonts with a
-  real fallback stack (system-ui etc.), since the phone may be offline
-  when the page loads (font request should fail silently, not break layout).
-- **Must work well at narrow mobile width** (~360-400px) — this is a phone
-  demo, held in portrait, in Chrome. No horizontal scroll, no cut-off text.
-- Add a persistent, clearly visible **"100% ON-DEVICE · NO INTERNET"**
-  style badge/indicator somewhere prominent (header is fine) — in the live
-  demo, people must not mistake this for "just a website," so this needs
-  to read as a real status indicator, not decoration.
-- A small "stats strip" on the Home page would be great if you have room —
-  e.g. model size, params, on-device latency range — framed as real specs,
-  not marketing fluff (I'll fill in the real numbers).
-- No external JS framework, no build step, no icon font — inline SVG icons
-  if you want icons. Everything must be pure static HTML/CSS/JS I can paste
-  into Python triple-quoted strings (so avoid backtick template literals
-  with `${}` if easy to avoid — plain string concatenation in JS is fine
-  and matches what's there now).
+`POST /fleet` returns:
+```json
+{
+  "title": "string (trip name)",
+  "meta": "string (which trip, model info, replay time in ms)",
+  "answer": "string (plain-text fallback log, you don't need to show this verbatim if you build the chart/event-card UI instead)",
+  "caveat": "string (the 'behavior classifier, not a crash predictor' disclaimer -- must stay visible somewhere, it's a legal/honesty requirement, not decoration)",
+  "chart": {
+    "n_rows": 1034,
+    "n_events": 246,
+    "tier_counts": {"low": 788, "medium": 31, "high": 215},
+    "timeline": [{"t": 0.0, "tier": "low", "p": 0.055}, "... ~120 points across the trip, t in seconds, tier is low/medium/high, p is the model's risk probability 0-1 ..."]
+  },
+  "events": [
+    {"t": 2.26, "tier": "high", "p": 0.526,
+     "behaviors": [["sudden-acc", 0.319], ["sudden-right-line-chg", 0.2]]},
+    "... up to 40 events, each behaviors list is the model's top-2 guesses at WHAT kind of driving event this was, with confidence -- this IS the reasoning, surface it clearly, e.g. 'likely sudden acceleration (32%)' ..."
+  ],
+  "events_truncated": 206
+}
+```
+or on error: `{"error": "string"}`
 
-## For reference: my current (not-good-enough) implementation
+Build the Fleet Risk result view from `chart` and `events`, not from
+parsing `answer`. A good shape: a 3-bar chart for tier_counts (low/medium/
+high, sized by count, colored by severity), a thin horizontal timeline
+strip below it (could be a row of small colored ticks/segments from the
+`timeline` array, colored by tier, so the whole trip's risk profile reads
+at a glance), then a scrollable list of event cards for the worst few
+`events` (sorted by `p` descending is fine even though the API returns
+them chronological) each showing: timestamp, a tier badge (color-coded
+low/medium/high), the probability, and the top reasoning behavior
+formatted as something like "Likely: sudden braking (32%)".
 
-Here's my current `app.py` in full — the whole page shell, both forms, the
-JS, and the Python backend that serves them — so you can see the exact
-contract (routes, JSON shape, container ids, encoding branching) you need
-to preserve, and what the current look is so you know what to improve on:
+**Here is the exact current `app.py`** — the full backend, so you can see
+every route, every page function, and the current (functional but
+visually plain) HTML/CSS it generates. Keep the Python structure and
+function names; I only need new values for `PAGE_HEAD`'s `<style>` block,
+the body markup each `*_form()` / `result_card()` function returns, and
+`PAGE_SCRIPT`'s JS (which you'll need to extend for the Fleet Risk chart
+rendering, since the current JS just dumps `answer` into a `<pre>`):
 
 ```python
 """PocketMind demo server — AgriLens + LearnLoop, one process, Termux-ready.
@@ -135,88 +179,323 @@ ENGINE_DIR = Path(__file__).parent
 ROOT_DIR = ENGINE_DIR.parent
 sys.path.insert(0, str(ENGINE_DIR))
 sys.path.insert(0, str(ROOT_DIR / "agrilens"))
+sys.path.insert(0, str(ROOT_DIR / "vehicle-risk"))
 
 from retrieval import Retriever  # noqa: E402
 from llama_client import LlamaClient, build_prompt, LlamaServerError  # noqa: E402
+from infer import RiskModel, format_text, replay_trip_struct  # noqa: E402
 
 ADVICE_BANK = Retriever(sorted((ROOT_DIR / "advice_bank").glob("*.md")))
 LEARN_CONTENT = Retriever(sorted((ROOT_DIR / "learnloop").glob("content_*.md")))
 LLAMA = LlamaClient()
+RISK_MODEL = RiskModel()
+SAMPLE_TRIPS_DIR = ROOT_DIR / "vehicle-risk" / "data" / "sample_trips"
 
 CAVEAT_AGRI = "Advice only. Confirm with your agriculture officer / KVK before acting."
 CAVEAT_LEARN = "Practice answer from LearnLoop — a prototype tutor. Confirm with your teacher."
+CAVEAT_FLEET = ("Behavior classifier, not a crash predictor — no public dataset pairs raw "
+                "telemetry with real crash outcomes. Runs entirely on-device, same model "
+                "size an ESP32 firmware port would use.")
 
 PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PocketMind — VYOMAA LABS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#16241c; --bg2:#1f3327; --bg3:#263d2f;
-    --clay:#d98a5f; --clay-dark:#1b2a21;
-    --sage:#8fb996; --fern:#4f7a5c;
-    --fg:#f2ede4; --muted:#a7bcac; --line:#324a3a;
-    --err:#e8927a;
-    --radius:16px;
+  :root {
+    --paper: #f6f1e6;
+    --paper-card: #fffcf6;
+    --ink: #2b2420;
+    --ink-soft: #7a6e60;
+    --line: #e4d8c3;
+    --sage: #7c8a6a;
+    --sage-ink: #35401f;
+    --clay: #bd6f45;
+    --clay-soft: #f1e0cf;
+    --danger: #a8503c;
+    --radius-lg: 22px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
   }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-  html,body{height:100%}
-  body{background:
-       radial-gradient(60vw 40vh at 100% -10%, rgba(143,185,150,.14), transparent 60%),
-       radial-gradient(70vw 50vh at -10% 110%, rgba(217,138,95,.10), transparent 60%),
-       var(--bg);
-       color:var(--fg); font-family:'Roboto',system-ui,-apple-system,Segoe UI,sans-serif;
-       margin:0; padding:22px 18px 40px; max-width:640px; margin-inline:auto}
-  h1{font-size:1.5rem; font-weight:900; margin:0 0 4px; letter-spacing:-.01em}
-  .sub{color:var(--muted); font-size:.88rem; margin-bottom:20px; line-height:1.4}
-  .badge{display:inline-block; background:var(--clay); color:var(--clay-dark); font-weight:700;
-         font-size:.66rem; padding:3px 9px; border-radius:20px; letter-spacing:.05em; vertical-align:2px}
-  nav{display:flex; gap:8px; margin-bottom:22px}
-  nav a{flex:1; text-align:center; color:var(--fg); text-decoration:none; background:var(--bg2);
-        padding:11px 10px; border-radius:12px; border:1px solid var(--line); font-size:.9rem;
-        font-weight:500; transition:background .15s, transform .1s, border-color .15s}
-  nav a:active{transform:scale(.97)}
-  nav a.active{background:var(--clay); color:var(--clay-dark); font-weight:700; border-color:var(--clay)}
-  .card{background:var(--bg2); border:1px solid var(--line); border-radius:var(--radius);
-        padding:20px; margin-bottom:16px; box-shadow:0 6px 20px rgba(0,0,0,.18)}
-  .card h3{margin-top:0}
-  label{display:block; font-size:.78rem; color:var(--sage); margin-bottom:8px;
-        text-transform:uppercase; letter-spacing:.06em; font-weight:700}
-  input[type=file],input[type=text],select,textarea{
-    width:100%; background:var(--bg); color:var(--fg); border:1.5px solid var(--line);
-    border-radius:11px; padding:12px; font-size:1rem; font-family:inherit; margin-bottom:14px;
-    transition:border-color .15s}
-  input[type=text]:focus{outline:none; border-color:var(--sage)}
-  button{background:var(--clay); color:var(--clay-dark); border:none; border-radius:11px;
-         padding:13px 20px; font-weight:700; font-size:.98rem; font-family:inherit; cursor:pointer;
-         width:100%; transition:transform .1s, opacity .15s; display:flex; align-items:center;
-         justify-content:center; gap:10px}
-  button:active{transform:scale(.98)}
-  button:disabled{opacity:.6; cursor:default}
-  .result{border-left:4px solid var(--clay); padding:18px 18px 18px 16px; margin-top:4px;
-          animation:riseIn .35s ease}
-  @keyframes riseIn{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
-  .result h3{margin:0 0 6px; font-size:1.1rem; color:var(--fg)}
-  .meta{color:var(--sage); font-size:.76rem; margin-bottom:12px; font-weight:500}
-  .caveat{margin-top:16px; font-size:.78rem; color:var(--muted); border-top:1px solid var(--line);
-          padding-top:12px; line-height:1.4}
-  .err{color:var(--err)}
-  pre{white-space:pre-wrap; font-family:inherit; line-height:1.55; margin:0; font-size:.96rem}
-  .thinking{display:flex; align-items:center; gap:12px; color:var(--sage); font-size:.9rem; font-weight:500}
-  .spinner{width:18px; height:18px; border-radius:50%; border:2.5px solid var(--line);
-           border-top-color:var(--sage); animation:spin .8s linear infinite; flex:none}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .thinking .t{font-variant-numeric:tabular-nums}
-  .hint{font-size:.72rem; color:var(--muted); margin-top:6px}
+
+  *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body { height: 100%; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 28px 18px 48px;
+    max-width: 480px;
+    margin-inline: auto;
+    line-height: 1.55;
+  }
+
+  header {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 26px;
+  }
+
+  .brand-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-style: italic;
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .offline-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--clay);
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 4px 0;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .offline-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background-color: var(--clay);
+    border-radius: 50%;
+    flex: none;
+  }
+
+  .sub {
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    margin: 0;
+    font-weight: 400;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+
+  nav {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    margin-bottom: 26px;
+  }
+
+  nav a {
+    text-align: center;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 10px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: 1px solid var(--line);
+    transition: all 0.2s ease;
+  }
+
+  nav a:hover {
+    border-color: var(--sage);
+    color: var(--ink);
+  }
+
+  nav a.active {
+    background: var(--sage);
+    color: #fdfbf4;
+    border-color: var(--sage);
+  }
+
+  .card {
+    background: var(--paper-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 2px rgba(43, 36, 32, 0.04);
+  }
+
+  .card h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+
+  input[type=file], input[type=text], select {
+    width: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 13px 14px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    margin-bottom: 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  input[type=file]::file-selector-button {
+    background: var(--clay-soft);
+    color: var(--clay);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-right: 12px;
+    cursor: pointer;
+  }
+
+  input[type=text]:focus, input[type=file]:focus, select:focus {
+    outline: none;
+    border-color: var(--sage);
+    box-shadow: 0 0 0 3px rgba(124, 138, 106, 0.18);
+  }
+
+  button[type=submit], .btn-action {
+    background: var(--sage);
+    color: #fdfbf4;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 14px 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+    width: 100%;
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  button[type=submit]:hover, .btn-action:hover { background: var(--sage-ink); }
+  button[type=submit]:active, .btn-action:active { transform: scale(0.98); }
+
+  button[type=submit]:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .result {
+    border-left: 3px solid var(--clay);
+    animation: riseIn 0.35s ease;
+  }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .result h3 {
+    margin: 0 0 8px;
+    color: var(--ink);
+  }
+
+  .meta {
+    color: var(--ink-soft);
+    font-size: 0.74rem;
+    margin-bottom: 14px;
+    font-weight: 500;
+    background: var(--clay-soft);
+    padding: 5px 10px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  .caveat {
+    margin-top: 16px;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+    line-height: 1.45;
+  }
+
+  .err {
+    color: var(--danger);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  pre {
+    white-space: pre-wrap;
+    font-family: inherit;
+    line-height: 1.6;
+    margin: 0;
+    font-size: 0.925rem;
+    color: var(--ink);
+  }
+
+  .thinking {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--clay);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2.5px solid var(--clay-soft);
+    border-top-color: var(--clay);
+    animation: spin 0.8s linear infinite;
+    flex: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .thinking .t { font-variant-numeric: tabular-nums; }
+
+  .hint {
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    margin-top: 8px;
+  }
 </style></head><body>
-<h1>PocketMind <span class="badge">ON-DEVICE DEMO</span></h1>
-<div class="sub">VYOMAA LABS — running fully offline on this phone, no cloud call</div>
+<header>
+  <div class="brand-row">
+    <h1>PocketMind</h1>
+    <div class="offline-badge">On-device</div>
+  </div>
+  <p class="sub">VYOMAA LABS — zero cloud calls, runs locally via Termux</p>
+</header>
 <nav>
   <a href="/" class="__NAV_HOME__">Home</a>
   <a href="/agrilens" class="__NAV_AGRI__">AgriLens</a>
   <a href="/learnloop" class="__NAV_LEARN__">LearnLoop</a>
+  <a href="/fleet" class="__NAV_FLEET__">Fleet Risk</a>
 </nav>
 """
 PAGE_SCRIPT = """
@@ -290,7 +569,8 @@ def render(body: str, active: str = "") -> bytes:
     head = (PAGE_HEAD
             .replace("__NAV_HOME__", "active" if active == "home" else "")
             .replace("__NAV_AGRI__", "active" if active == "agri" else "")
-            .replace("__NAV_LEARN__", "active" if active == "learn" else ""))
+            .replace("__NAV_LEARN__", "active" if active == "learn" else "")
+            .replace("__NAV_FLEET__", "active" if active == "fleet" else ""))
     return (head + body + PAGE_SCRIPT + PAGE_TAIL).encode("utf-8")
 
 
@@ -298,13 +578,18 @@ def home_page() -> bytes:
     body = """
 <div class="card">
   <h3 style="margin-top:0">AgriLens</h3>
-  <p class="meta" style="color:var(--muted)">Point a camera at a chilli, tomato, or maize leaf. Get an offline health read.</p>
-  <a href="/agrilens"><button type="button" style="width:auto; display:inline-flex">Open AgriLens</button></a>
+  <p class="meta" style="font-family:inherit; display:block; background:none; padding:0">Point a camera at a chilli, tomato, or maize leaf. Get an offline health read.</p>
+  <a href="/agrilens" class="btn-action">Open AgriLens</a>
 </div>
 <div class="card">
   <h3 style="margin-top:0">LearnLoop</h3>
-  <p class="meta" style="color:var(--muted)">Ask a class 8-10 Maths, Science, or Social question. Get a plain-language explanation.</p>
-  <a href="/learnloop"><button type="button" style="width:auto; display:inline-flex">Open LearnLoop</button></a>
+  <p class="meta" style="font-family:inherit; display:block; background:none; padding:0">Ask a class 8-10 Maths, Science, or Social question. Get a plain-language explanation.</p>
+  <a href="/learnloop" class="btn-action">Open LearnLoop</a>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">Fleet Risk</h3>
+  <p class="meta" style="font-family:inherit; display:block; background:none; padding:0">Replay a real recorded trip's accelerometer/gyro stream through the on-device risk model, same as an ESP32+IMU rig would send.</p>
+  <a href="/fleet" class="btn-action">Open Fleet Risk</a>
 </div>
 """
     return render(body, "home")
@@ -336,6 +621,28 @@ def learnloop_form(result_html: str = "") -> bytes:
 <div id="learnloop-result">{result_html}</div>
 """
     return render(body, "learn")
+
+
+def fleet_form(result_html: str = "") -> bytes:
+    trips = sorted(p.name for p in SAMPLE_TRIPS_DIR.glob("*.csv"))
+    options = "".join(f'<option value="{html.escape(t)}">{html.escape(_trip_label(t))}</option>' for t in trips)
+    body = f"""
+<div class="card">
+  <form method="POST" action="/fleet" data-pm="fleet-result">
+    <label>Recorded trip (accelerometer + gyroscope stream)</label>
+    <select name="trip">{options}</select>
+    <button type="submit">Replay on-device</button>
+  </form>
+  <p class="hint" style="margin-top:14px">Same raw IMU signal an ESP32 + MPU6050/9250 rig streams from the OBD2-adjacent sensor mount. Two-stage RandomForest, 30 trees each, no cloud call.</p>
+</div>
+<div id="fleet-result">{result_html}</div>
+"""
+    return render(body, "fleet")
+
+
+def _trip_label(fname: str) -> str:
+    parts = fname.replace(".csv", "").split("_")
+    return " ".join(parts[1:3]) if len(parts) > 2 else fname
 
 
 def result_card(title: str, meta: str, answer: str, caveat: str) -> str:
@@ -378,6 +685,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send(agrilens_form())
         elif self.path.startswith("/learnloop"):
             self._send(learnloop_form())
+        elif self.path.startswith("/fleet"):
+            self._send(fleet_form())
         else:
             self._send(b"not found", 404)
 
@@ -387,6 +696,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._handle_agrilens()
             elif self.path.startswith("/learnloop"):
                 self._handle_learnloop()
+            elif self.path.startswith("/fleet"):
+                self._handle_fleet()
             else:
                 self._send(b"not found", 404)
         except Exception as e:
@@ -495,6 +806,44 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._send(learnloop_form(result_card(title, meta, answer, CAVEAT_LEARN)))
 
+    # ---- Fleet Risk ----
+    def _handle_fleet(self):
+        ajax = self._is_ajax()
+        length = int(self.headers.get("Content-Length", 0))
+        raw = self.rfile.read(length).decode("utf-8", errors="replace")
+        fields = parse_qs(raw)
+        trip = (fields.get("trip") or [""])[0].strip()
+        trip_path = SAMPLE_TRIPS_DIR / trip
+        if not trip or not trip_path.is_file():
+            msg = "Pick a recorded trip first."
+            self._send_json({"error": msg}, 400) if ajax else self._send(fleet_form(error_card(msg)), 400)
+            return
+
+        t0 = time.time()
+        struct = replay_trip_struct(RISK_MODEL, trip_path)
+        ms = int((time.time() - t0) * 1000)
+        title = _trip_label(trip)
+        meta = f"Replayed {trip} · 2-stage RandomForest (60 trees total) · {ms}ms · fully offline"
+
+        if ajax:
+            # chart/events: structured data for a frontend to actually plot
+            # (tier bar counts, a risk-over-time timeline, ranked event cards
+            # with the reasoning) instead of parsing the text log.
+            self._send_json({
+                "title": title, "meta": meta, "caveat": CAVEAT_FLEET,
+                "answer": format_text(struct),  # text fallback
+                "chart": {
+                    "n_rows": struct["n_rows"],
+                    "n_events": struct["n_events"],
+                    "tier_counts": struct["tier_counts"],
+                    "timeline": struct["timeline"],
+                },
+                "events": struct["events"],
+                "events_truncated": struct["events_truncated"],
+            })
+        else:
+            self._send(fleet_form(result_card(title, meta, format_text(struct), CAVEAT_FLEET)))
+
 
 def _extract_multipart_file(raw: bytes, boundary: bytes, field_name: bytes) -> bytes | None:
     """Minimal multipart/form-data parser for a single file field.
@@ -529,20 +878,26 @@ if __name__ == "__main__":
     main()
 ```
 
-## What I want back from you
+**What I need back from you:**
 
-Give me:
-1. The new shared page-shell HTML/CSS (head + nav + global styles).
-2. The new body markup for Home, AgriLens, and LearnLoop.
-3. The new shared `<script>` block.
-4. A one-line note on any container id/class names you used, if different
-   from what I listed above, so I can wire them into the Python templates correctly.
+1. The new `<style>` block contents (can reuse CSS custom properties /
+   tokens across all three tools' sub-themes, redefined per active page
+   if that's how you choose to differentiate them — e.g. a `body[data-tool=fleet]`
+   selector, or distinct classes on each page's root container).
+2. The new body markup for `home_page()`, `agrilens_form()`,
+   `learnloop_form()`, `fleet_form()`, and `result_card()` (note:
+   `result_card()` is currently generic/shared across all three tools —
+   tell me if you want it to stay one function with tool-specific CSS
+   classes, or if Fleet Risk's result should be built by different JS
+   entirely since it needs the chart, not just text).
+3. The updated `PAGE_SCRIPT` JS — specifically the part that builds the
+   Fleet Risk result view from the `chart`/`events` JSON (the current JS
+   only knows how to render `{title, meta, answer, caveat}` into a
+   `<pre>` block; it needs a second code path for Fleet Risk's richer
+   response).
+4. Any new container IDs/classes you introduce, so I know what to wire up
+   on the Python side with zero guessing.
 
----
-
-# After Gemini replies
-
-Paste its full reply back to me here (or save it to a file and tell me the
-path) and I'll wire it into `engine/app.py`'s `PAGE_HEAD` / `PAGE_SCRIPT` /
-`home_page()` / `agrilens_form()` / `learnloop_form()` / `result_card()`
-functions, redeploy it to the phone, and re-screenshot the demo.
+Keep everything mobile-width (phone browser, ~360-420px). Keep the file
+count at one page — no separate CSS/JS files, this all lives in Python
+string literals that get concatenated and served inline.
