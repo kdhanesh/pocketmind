@@ -7,8 +7,13 @@ and **LearnLoop** (class 8-10 question → plain-language explanation) — plus
 an early-stage third module, **Vehicle Risk** (offline driving-behavior /
 accident-risk classifier from accelerometer data, see `vehicle-risk/`).
 
-See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the full system design and
-**[BENCHMARKS.md](BENCHMARKS.md)** for real, measured on-device numbers.
+See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the full system design,
+**[BENCHMARKS.md](BENCHMARKS.md)** for real, measured on-device numbers,
+and **[BATTLE_TEST_REPORT.md](BATTLE_TEST_REPORT.md)** for stress/
+adversarial testing on the live phone — including two real bugs this
+found and fixed (a classifier confidence gap, a retrieval precision bug
+that let the model answer off its own knowledge instead of refusing) and
+one security fix (a path-traversal bug in Fleet Risk).
 
 Not using vLLM or LangGraph: vLLM needs a CUDA GPU and real RAM/VRAM — it
 cannot run on a phone. LangGraph is a real Python framework but it's extra
@@ -67,7 +72,7 @@ mode that would actually hurt someone.
 | On-device model | Switched to **Qwen2.5-0.5B-Instruct** as default (3-5x faster than 1.5B, ~15s vs. 42-83s per answer, no quality loss found — see BENCHMARKS.md). |
 | Interactive UI | Working fetch()-based flow with a live "thinking" timer (real answers take 15-85s, so an honest live timer beats a frozen page). Organic-minimalist theme (Fraunces + Source Sans 3), confirmed rendering on-device. |
 | Fleet Risk (vehicle accident-risk) | Two-stage offline behavior classifier, 70% held-out-trip accuracy on risk detection. **Runs live on the phone** — a 4th tab in the web UI replays a recorded trip through the model on-device, and `vehicle-risk/replay_termux.py` gives the same result as a terminal stream. No sklearn/pandas needed on-device: the trained forests are exported to plain-Python-walkable JSON (`vehicle-risk/infer.py`), numerically verified to match sklearn exactly. ESP32 firmware port is next. See `vehicle-risk/README.md`. |
-| End-to-end on the actual phone | **Done.** Confirmed working over Wi-Fi for all three tools; airplane-mode proof screenshot still pending. |
+| End-to-end on the actual phone | **Done.** Confirmed over Wi-Fi for all three tools, and with WiFi explicitly disabled + airplane mode on (screenshots in BATTLE_TEST_REPORT.md) — a real query submitted through Chrome returned the correct grounded answer with no radios active. |
 
 ## Running it
 

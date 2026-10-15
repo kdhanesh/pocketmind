@@ -68,12 +68,25 @@ of them high-risk. Verified numerically identical to sklearn's own
 standalone terminal script (`replay_termux.py`), both with zero network
 calls in the process.
 
-## What's not yet measured
+## Now measured (previously listed as open)
 
-- 0.5B model's full end-to-end AgriLens/LearnLoop pipeline timing (only
-  the raw completion call was isolated-benchmarked above — re-run through
-  `app.py` once the UI redesign lands).
-- Battery/thermal impact of a sustained demo session.
-- Airplane-mode timing (expected identical to Wi-Fi-connected timing,
-  since nothing in the pipeline makes a network call either way — this is
-  the actual claim the airplane-mode demo proves, not a speed difference).
+- **End-to-end AgriLens/LearnLoop pipeline timing through `app.py`** (not
+  just the isolated completion call): AgriLens 7.1-20.3s SLM time across
+  6 real photos (classify stage 180-716ms separately); LearnLoop 38-55s
+  across 6 back-to-back live questions. See `BATTLE_TEST_REPORT.md` for
+  the full per-call breakdown — note this is measurably slower than the
+  15.3s single-shot number above under sustained repeated use.
+- **Battery/thermal impact of a sustained session**: flat. 35.0°C before
+  a ~25-call stress battery (AgriLens + LearnLoop + Fleet Risk), 34.0°C
+  after. No throttling signature.
+- **Airplane-mode proof**: done with WiFi explicitly disabled (not just
+  the airplane-mode toggle, which didn't propagate to the radio on this
+  Android build) — a real LearnLoop query submitted through Chrome
+  returned the correct answer in 55.5s with the plane icon visible and
+  WiFi confirmed off the whole time. Screenshots in `BATTLE_TEST_REPORT.md`.
+
+## What's still not measured
+
+- Root cause of the 15s → 38-55s LearnLoop latency drift under repeated
+  calls (ruled out thermal; `llama-server` internal state is the leading
+  suspect, not yet isolated).
