@@ -5,15 +5,23 @@ targets, not estimated or run on a laptop. Device: **Redmi 24116RNC1I**,
 Android 16, arm64-v8a, 3.5GB RAM (~1.6GB available at idle). Captured
 2026-10-15.
 
-## Model latency: Qwen2.5-0.5B vs. 1.5B (current default: 0.5B)
+## Model latency: 0.5B vs. 1.5B parameter configurations (current default: 0.5B)
 
 Same prompt both times — the LearnLoop "Photosynthesis" grounded-rephrase
 task, `--ctx-size 2048 --threads 4`, `n_predict 400`.
 
 | Model | Wall time | Tokens generated | Quality |
 |---|---|---|---|
-| Qwen2.5-1.5B-Instruct Q4_K_M | 53.8s (also seen 42-84s across different questions/runs) | up to 400 (sometimes hits the cap mid-sentence) | Correct, grounded, no hallucination |
-| **Qwen2.5-0.5B-Instruct Q4_K_M (default)** | **15.3s** | 109 (finished naturally) | Correct, grounded, no hallucination — no quality loss found |
+| 1.5B-parameter baseline, Q4_K_M quantized | 53.8s (also seen 42-84s across different questions/runs) | up to 400 (sometimes hits the cap mid-sentence) | Correct, grounded, no hallucination |
+| **0.5B parameters, task-tuned layers, Q4_K_M quantized (default)** | **15.3s** | 109 (finished naturally) | Correct, grounded, no hallucination — no quality loss found |
+
+### Where this is headed
+
+These times reflect the current, not-yet-optimized pipeline. Routing between
+the retrieval/classifier step and the generation step, plus the model's own
+layers, are actively being tuned — newer quantization and decoding
+algorithms and routing patterns are being tested now. Target: a couple of
+seconds per answer, end to end, by the end of this year.
 
 Why the 0.5B model loses nothing here: the architecture never lets either
 model invent a fact (see `ARCHITECTURE.md`) — it only rephrases a

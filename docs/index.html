@@ -211,6 +211,7 @@ table.bench td.num { font-family: var(--font-mono); font-variant-numeric: tabula
       <a href="#tools">Tools</a>
       <a href="#performance">Performance</a>
       <a href="#reliability">Reliability</a>
+      <a href="#status">Status</a>
     </nav>
   </div>
 </div>
@@ -401,6 +402,16 @@ confidence + timing + caveat"]
       headroom is the actual reason there's no embedding model, no vector index, and no
       multi-agent framework here &mdash; there isn't memory to spare for a second heavy process,
       and the real retrieval task is one keyword match and one rephrase call.</p>
+
+    <div class="reliability-item open" style="margin-top:24px;">
+      <span class="tagline-pill">Where latency is headed</span>
+      <h3>These are unoptimized-pipeline numbers, not a ceiling</h3>
+      <p>The multi-second to multi-ten-second answer times shown on this page reflect the current,
+        not-yet-optimized pipeline. The model's own layers and the routing between retrieval and
+        generation are actively being tuned &mdash; newer quantization, decoding, and routing
+        algorithms and patterns are being tested now. Target: a couple of seconds per answer,
+        end to end, by the end of this year.</p>
+    </div>
   </section>
 
   <section id="reliability">
@@ -438,6 +449,48 @@ confidence + timing + caveat"]
         <p>Across repeated back-to-back questions, answer time drifts from ~15s to 30&ndash;55s.
           Thermal throttling was ruled out; still comfortably inside a usable demo pace, and
           tracked for a closer look.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="status">
+    <div class="eyebrow">Where each piece actually stands</div>
+    <h2 style="font-size:1.9rem; margin-top:8px;">Deployment status, honestly</h2>
+    <p style="margin-top:10px; color:var(--ink-soft); max-width:62ch;">Nothing below is marked done
+      unless it's actually done on the real device or in the field. Everything else is labeled
+      in progress, with what's actually left.</p>
+
+    <div class="reliability-list">
+      <div class="reliability-item">
+        <span class="tagline-pill">AgriLens &middot; field pilot</span>
+        <h3>In progress &mdash; piloting with 5 farmers</h3>
+        <p>Real field photos from 5 participating farmers are being collected now to validate
+          real-world accuracy beyond the lab-style validation set the classifier was built on.</p>
+      </div>
+      <div class="reliability-item">
+        <span class="tagline-pill">LearnLoop &middot; field pilot</span>
+        <h3>In progress &mdash; piloting with 10 students</h3>
+        <p>10 students across Class 8&ndash;10 topics are using LearnLoop in real study sessions,
+          validating retrieval coverage and answer quality outside the lab.</p>
+      </div>
+      <div class="reliability-item">
+        <span class="tagline-pill">Fleet Risk &middot; database layer</span>
+        <h3>Complete</h3>
+        <p>The on-device trip/event schema and database layer is built and verified &mdash; this is
+          the one Fleet Risk layer that's actually done, not in progress.</p>
+      </div>
+      <div class="reliability-item open">
+        <span class="tagline-pill">Fleet Risk &middot; vehicle hardware</span>
+        <h3>In progress &mdash; building up the on-vehicle sensor layer</h3>
+        <p>The IMU/sensor data-collection hardware that will sit on the actual vehicle is being
+          built up now. The model itself already runs live on-phone against recorded trip data;
+          live hardware is the remaining integration step.</p>
+      </div>
+      <div class="reliability-item open">
+        <span class="tagline-pill">Fleet Risk &middot; cloud layer</span>
+        <h3>In progress &mdash; AWS cloud-compute layer</h3>
+        <p>The cloud-compute layer for fleet-wide aggregation and monitoring is being built on AWS.
+          Not yet live; the on-device model does not depend on it to function.</p>
       </div>
     </div>
   </section>

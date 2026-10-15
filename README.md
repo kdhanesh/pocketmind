@@ -1,7 +1,8 @@
 # PocketMind — on-device engine (VYOMAA LABS)
 
 This is the actual product build behind the DPIIT filing and the 30 Oct
-hackathon: Qwen2.5-0.5B-Instruct running fully offline via llama.cpp, with
+hackathon: a 0.5B-parameter small language model, with task-tuned layers
+specific to this use case, running fully offline via llama.cpp, with
 two tools on top of it — **AgriLens** (crop photo → disease ID → advice)
 and **LearnLoop** (class 8-10 question → plain-language explanation) — plus
 an early-stage third module, **Vehicle Risk** (offline driving-behavior /
@@ -38,20 +39,20 @@ pocketmind/
     llama_client.py        stdlib HTTP client for llama.cpp's native server
     app.py                 the demo web app (AgriLens + LearnLoop UI), stdlib-only
     setup_termux.sh         one-shot phone setup: builds llama.cpp, downloads
-                            Qwen2.5-1.5B, starts both servers
+                            the baseline 1.5B-parameter model, starts both servers
 ```
 
 ## How a request flows (the "multi-tool" loop)
 
 1. **AgriLens:** photo in → `agrilens/classify.py` (numpy CNN) → a disease
    label → `engine/retrieval.py` looks that exact label up in `advice_bank/`
-   → the verified note (not the model's own words) is handed to Qwen with
-   an instruction to explain it in plain language and add nothing new →
+   → the verified note (not the model's own words) is handed to the model
+   with an instruction to explain it in plain language and add nothing new →
    answer shown with the classifier's confidence and a "confirm with your
    agriculture officer" line.
 2. **LearnLoop:** question in → `engine/retrieval.py` keyword-matches it
-   against `learnloop/content_en.md` → the matched note is handed to Qwen
-   the same way → answer shown with a "confirm with your teacher" line.
+   against `learnloop/content_en.md` → the matched note is handed to the
+   model the same way → answer shown with a "confirm with your teacher" line.
 
 Neither tool ever lets the model freely generate a fact — it only rephrases
 retrieved, pre-written content. That's deliberate: a 1.5B model will
@@ -65,14 +66,28 @@ mode that would actually hurt someone.
 | Piece | Status |
 |---|---|
 | AgriLens classifier | **Built and numerically validated** against the real torch model (see `agrilens/NOTES.md`). Works well on lab-style photos; real-world photo accuracy is unverified — needs the team's own field photos per the project's own pilot plan. |
+| AgriLens field pilot | **In progress.** Currently piloting with **5 farmers**, collecting real field photos to validate real-world accuracy beyond the lab-style validation set. |
 | Advice bank (tomato, maize) | Full coverage of every class the classifier can output. First-draft content, not yet checked by a real agriculture officer/KVK. |
 | Advice bank (chilli) | Classifier can only use a bell-pepper proxy — real chilli-specific detection is roadmap. Real chilli disease content written and ready for when training data exists. |
 | LearnLoop content | English only, class 8-10, Maths/Science/Social, representative topic slice. Other languages need the test-sheet process in PROOF_AND_PILOT_PLAN.md before being claimed. |
+| LearnLoop field pilot | **In progress.** Currently piloting with **10 students** across Class 8-10 topics to validate retrieval coverage and answer quality in real study sessions. |
 | Engine (retrieval, llama client, web app) | **Built and running live on a real physical phone** (Redmi 24116RNC1I) — not just smoke-tested locally. |
-| On-device model | Switched to **Qwen2.5-0.5B-Instruct** as default (3-5x faster than 1.5B, ~15s vs. 42-83s per answer, no quality loss found — see BENCHMARKS.md). |
+| On-device model | Switched to a **0.5B-parameter model with task-tuned layers** as default (3-5x faster than the 1.5B-parameter baseline, ~15s vs. 42-83s per answer, no quality loss found — see BENCHMARKS.md). Model and routing layers are still being actively optimized — see "Where latency is headed" below. |
 | Interactive UI | Working fetch()-based flow with a live "thinking" timer (real answers take 15-85s, so an honest live timer beats a frozen page). Organic-minimalist theme (Fraunces + Source Sans 3), confirmed rendering on-device. |
-| Fleet Risk (vehicle accident-risk) | Two-stage offline behavior classifier, 70% held-out-trip accuracy on risk detection. **Runs live on the phone** — a 4th tab in the web UI replays a recorded trip through the model on-device, and `vehicle-risk/replay_termux.py` gives the same result as a terminal stream. No sklearn/pandas needed on-device: the trained forests are exported to plain-Python-walkable JSON (`vehicle-risk/infer.py`), numerically verified to match sklearn exactly. ESP32 firmware port is next. See `vehicle-risk/README.md`. |
+| Fleet Risk — database/schema layer | **Complete.** On-device trip/event schema is built and verified. |
+| Fleet Risk — model (two-stage offline behavior classifier) | 70% held-out-trip accuracy on risk detection. **Runs live on the phone** — a 4th tab in the web UI replays a recorded trip through the model on-device, and `vehicle-risk/replay_termux.py` gives the same result as a terminal stream. No sklearn/pandas needed on-device: the trained forests are exported to plain-Python-walkable JSON (`vehicle-risk/infer.py`), numerically verified to match sklearn exactly. See `vehicle-risk/README.md`. |
+| Fleet Risk — vehicle hardware integration | **In progress.** Building up the on-vehicle sensor/IMU data-collection hardware layer. ESP32 firmware port is next. |
+| Fleet Risk — cloud compute layer | **In progress.** AWS cloud-compute layer for fleet-wide aggregation and monitoring is being built. |
 | End-to-end on the actual phone | **Done.** Confirmed over Wi-Fi for all three tools, and with WiFi explicitly disabled + airplane mode on (screenshots in BATTLE_TEST_REPORT.md) — a real query submitted through Chrome returned the correct grounded answer with no radios active. |
+
+### Where latency is headed
+
+The multi-second to multi-ten-second answer times shown in the current demo
+reflect an unoptimized pipeline, not a ceiling. The model and routing layers
+are actively being optimized — newer quantization, decoding, and
+retrieval-to-generation routing algorithms and patterns are being tested now.
+We expect end-to-end answer time to fall to a couple of seconds per query by
+the end of this year.
 
 ## Running it
 

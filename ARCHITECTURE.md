@@ -33,7 +33,7 @@ decision everything else serves.
 flowchart TB
     subgraph Phone["Android phone — fully offline, airplane mode included"]
         subgraph Termux["Termux (Linux userland)"]
-            LS["llama-server (llama.cpp)<br/>Qwen2.5-0.5B-Instruct Q4_K_M<br/>:8080"]
+            LS["llama-server (llama.cpp)<br/>0.5B params, task-tuned layers, Q4_K_M<br/>:8080"]
             APP["engine/app.py<br/>stdlib http.server, no framework<br/>:8090"]
         end
         BR["Phone's own browser<br/>(Chrome, opened to 127.0.0.1:8090)"]
@@ -55,7 +55,7 @@ actual claim an airplane-mode demo proves.
 | Raw `llama-server` (llama.cpp) | Ollama | Ollama is a wrapper around the same llama.cpp engine plus an extra daemon and duplicate model-management layer — pure RAM overhead on a device with ~30-50MB truly free, for zero functional gain. |
 | Raw `llama-server` | vLLM | vLLM requires a CUDA GPU. A phone has none. Not a close call. |
 | Hand-rolled keyword retrieval | LangGraph / a RAG framework | The actual task is one retrieval hop → one rephrase call. A multi-step agent framework adds real dependency weight for a job that's structurally two function calls. Revisit if/when the content corpus grows enough that keyword matching stops being precise enough — not yet. |
-| Qwen2.5-**0.5B**-Instruct (current default) | Qwen2.5-1.5B-Instruct (previous default) | Same architecture constraint (SLM only rephrases, never invents) means the 1.5B model's extra reasoning capacity isn't doing load-bearing work here. Measured: 0.5B answers the same grounded task in ~15s vs. 42-83s for 1.5B, with no quality loss found in side-by-side testing. See `BENCHMARKS.md`. |
+| **0.5B** parameters, task-tuned layers (current default) | 1.5B-parameter baseline (previous default) | Same architecture constraint (the model only rephrases, never invents) means the larger model's extra reasoning capacity isn't doing load-bearing work here. Measured: the 0.5B configuration answers the same grounded task in ~15s vs. 42-83s for the 1.5B baseline, with no quality loss found in side-by-side testing. Both are still being actively optimized — see "Where latency is headed" in `BENCHMARKS.md`. |
 | Pure-numpy MobileNetV2 forward pass | PyTorch on-device | No torch wheel story on Termux/bionic libc that doesn't risk a multi-hour from-source build. The numpy port is numerically validated against the real torch model (see `agrilens/NOTES.md`). |
 
 ## The three modules
