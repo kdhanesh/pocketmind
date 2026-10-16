@@ -2,8 +2,9 @@
 
 Every number below was captured on the actual physical phone this build
 targets, not estimated or run on a laptop. Device: **Redmi 24116RNC1I**,
-Android 16, arm64-v8a, 3.5GB RAM (~1.6GB available at idle). Captured
-2026-10-15.
+Android 16, arm64-v8a, 3.5GB RAM (~1.22GB available at idle after a
+clean restart, 0.5B model). Captured 2026-10-15, memory figures
+re-measured 2026-10-16.
 
 ## Model latency: 0.5B vs. 1.5B parameter configurations (current default: 0.5B)
 
@@ -44,13 +45,28 @@ friendlier words," so the smaller, 3-5x faster model does the same job.
 
 ## Memory headroom (why model size is a real constraint here, not a nicety)
 
-- `llama-server` alone (1.5B model loaded): ~1GB RSS.
-- System free RAM with that server running: **~26-41MB truly free**
-  (~1.6GB "available" counting reclaimable cache).
-- This is the direct evidence against adding an embedding model + vector
-  index + a multi-agent framework (LangGraph or similar) on top — there
-  isn't RAM margin to spare for a second heavy process, and the actual
-  retrieval task (one keyword match, one rephrase call) doesn't need one.
+Re-measured 2026-10-16 after a clean cold restart (both `llama-server`
+and `app.py` killed and relaunched fresh, no other foreground apps, no
+stray/duplicate processes) via `/proc/meminfo` and `ps -o rss` directly
+on-device — not estimated:
+
+| Condition | MemTotal | MemFree (truly free) | MemAvailable (incl. reclaimable cache) | `llama-server` RSS |
+|---|---|---|---|---|
+| Idle, just after clean restart (0.5B model) | 3,665,248 kB (~3.58GB) | 52,016 kB (~51MB) | 1,253,460 kB (~1.22GB) | 475,780 kB (~465MB) |
+| Mid-generation (0.5B model, busiest point sampled) | 3,665,248 kB | 74,740 kB (~73MB) | 1,329,004 kB (~1.30GB) | — |
+
+`app.py` itself is negligible: ~30MB RSS throughout, stdlib `http.server`
+only.
+
+For comparison, the 1.5B configuration's `llama-server` RSS was ~1GB
+(measured in an earlier pass, not re-verified on 2026-10-16 since 0.5B
+is the shipped default) — the 0.5B model's ~465MB is the real, current
+headroom number for the default running configuration.
+
+This is the direct evidence against adding an embedding model + vector
+index + a multi-agent framework (LangGraph or similar) on top — there
+isn't RAM margin to spare for a second heavy process, and the actual
+retrieval task (one keyword match, one rephrase call) doesn't need one.
 
 ## Fleet Risk classifier (prototype, now running on-device)
 
