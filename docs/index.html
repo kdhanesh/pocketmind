@@ -147,6 +147,9 @@ section.tight { padding-block: 36px; }
   margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;
 }
 @media (max-width: 680px) { .tool-media { grid-template-columns: 1fr; } }
+.tool-media-3col { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 900px) { .tool-media-3col { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 680px) { .tool-media-3col { grid-template-columns: 1fr; } }
 .media-card {
   background: var(--paper-card); border: 1px solid var(--line); border-radius: var(--radius-lg);
   overflow: hidden;
@@ -315,14 +318,18 @@ confidence + timing + caveat"]
       <p class="tool-desc">Ask a Class 8&ndash;10 Maths, Science, or Social Studies question and get
         a plain-language explanation matched against verified study notes &mdash; never the
         model's own guess.</p>
-      <div class="tool-media">
+      <div class="tool-media tool-media-3col">
         <div class="media-card">
           <video src="media/demo-learnloop.mp4" poster="media/learnloop-result.png" autoplay muted loop playsinline controls></video>
           <div class="media-cap"><span>Real screen recording</span><span>phone, Chrome</span></div>
         </div>
         <div class="media-card">
-          <img src="media/learnloop-result.png" alt="LearnLoop result for Newton's second law, matched note shown, fully offline">
-          <div class="media-cap"><span>Grounded answer</span><span>fully offline</span></div>
+          <img src="media/learnloop-result.png" alt="LearnLoop result for Newton's second law of motion, matched note and formula shown, fully offline">
+          <div class="media-cap"><span>Grounded answer</span><span>F = ma, rendered correctly</span></div>
+        </div>
+        <div class="media-card">
+          <img src="media/learnloop-result-2.png" alt="LearnLoop result for Newton's second law of motion, scrolled further to show the full step-by-step explanation">
+          <div class="media-cap"><span>Full answer, scrolled</span><span>fully offline</span></div>
         </div>
       </div>
       <div class="tool-notes">

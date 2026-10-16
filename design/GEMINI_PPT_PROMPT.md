@@ -42,18 +42,49 @@ is finalizing the deck.
 
 ## Live links and files
 
+Every file below is a real, local file at the path given, inside this
+repo's `design/demo-media/` folder — **attach these directly as files**
+when pasting into Gemini; don't rely on it fetching a URL. The same
+filenames (hyphenated instead of underscored) are also live on the
+website if a tool supports Insert Image/Video → By URL (Google Slides
+does): `https://kdhanesh.github.io/pocketmind/media/<hyphenated-name>`.
+
 - **Product site:** https://kdhanesh.github.io/pocketmind/
+
 - **Combined narrated demo video** (~3 min, landscape, all three tools +
-  architecture + business model + national mission + offline proof):
-  https://kdhanesh.github.io/pocketmind/media/demo-full-narrated.mp4
-- **Per-tool raw clips:** demo-agrilens.mp4, demo-learnloop.mp4,
-  demo-fleet.mp4 (same `/media/` path as above)
-- **Screenshots — real image files, in this repo at
-  `design/demo-media/`, to attach directly (don't rely on a tool fetching
-  the URL below reliably):** `home.png`, `agrilens-result.png`,
-  `learnloop-result.png`, `fleet-dashboard.png`, `airplane-proof.png`.
-  Same files are also live at `https://kdhanesh.github.io/pocketmind/media/<name>`
-  if a tool supports Insert Image → By URL (Google Slides does).
+  architecture + business model + national mission + offline proof,
+  voiced): `design/demo-media/demo_full_narrated.mp4`
+
+- **Per-tool demo clips — trimmed, loading time cut, result held ~5s**
+  (use these on slide 5 and slide 9; each is also available as an
+  animated GIF for slides/tools that don't embed video):
+  - AgriLens: `design/demo-media/demo_agrilens.mp4` (video, 8.5s) /
+    `design/demo-media/demo-agrilens.gif` (GIF, same content)
+  - LearnLoop: `design/demo-media/demo_learnloop.mp4` (video, 8.5s,
+    shows "What is Newton's second law of motion" start to finish) /
+    `design/demo-media/demo-learnloop.gif` (GIF, same content)
+  - Fleet Risk: `design/demo-media/demo_fleet.mp4` (video, 7.2s) /
+    `design/demo-media/demo-fleet.gif` (GIF, same content)
+  - If the slide tool supports an embedded, auto-playing video, prefer
+    the `.mp4`; use the `.gif` only where the tool can't embed video
+    (e.g. a plain image placeholder, or a PDF export).
+
+- **Screenshots — all in `design/demo-media/`:**
+  - `home.png` — phone home screen (slide 1)
+  - `agrilens-result.png` — full AgriLens result, Tomato Septoria leaf
+    spot, 100% confidence (slide 5)
+  - `learnloop-result.png` — top of the LearnLoop result: question,
+    matched note, intro text, and the formula rendered as `F = ma`
+    (slide 5, first of a pair)
+  - `learnloop-result-2.png` — same answer scrolled further, showing
+    the full step-by-step explanation (slide 5, second of the pair —
+    LearnLoop's answer is long enough that one screenshot can't show
+    it all; use both side by side, not just the first)
+  - `fleet-dashboard.png` — full Fleet Risk dashboard: risk-tier tiles,
+    timeline, flagged events (slide 5 or 9)
+  - `airplane-proof.png` — airplane-mode proof, plane icon visible,
+    WiFi confirmed off, correct grounded answer (slide 9)
+
 - **QR code for "Watch the demo" (slide 9):** no QR generator is
   available in this environment — generate one from the narrated-video
   URL above using any QR tool (e.g. qr-code-generator.com) and paste the
