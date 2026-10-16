@@ -90,6 +90,35 @@ retrieval-to-generation routing algorithms and patterns are being tested now.
 We expect end-to-end answer time to fall to a couple of seconds per query by
 the end of this year.
 
+## Who this is for
+
+Three tools, three different ways of reaching the people who need them:
+
+| Audience | What they get |
+|---|---|
+| Farmers | **AgriLens is free** — crop-disease diagnosis and verified agronomy advice, at no cost, for any farmer with a phone that can run it. |
+| Students | **LearnLoop is free** for individual students. |
+| Schools | For a school, LearnLoop is customized to that school's own syllabus and curriculum — a first-hand mentor tuned to how that school actually teaches, not a generic chatbot. |
+| Agribusiness (large farms / crop companies) | A **paid, customized AgriLens**: we build a new dataset and train a model specific to the crop that company actually grows, then hand their farmer network a smart device tuned to it. This is a separate, paid offering from the free farmer tool above. |
+| Fleet management / transportation companies | **Fleet Risk is closed-source by design** — a licensed product built to be sold into that one sector, not a free or open tool like the other two. |
+
+### A better India ahead
+
+Once the architecture layers, training process, and performance benchmarks
+are finalized across sectors, the target is **100+ fully-trained, customized
+models** — each tuned to its own sector the way AgriLens and LearnLoop
+already are — all runnable on any smartphone of even the lowest practical
+configuration, so access is never gated by hardware.
+
+That goal sits alongside work already underway nationally: **Startup India /
+DPIIT recognition** (the basis of this filing), the **IndiaAI Mission**'s push
+to democratize AI access, the **Digital Agriculture Mission**'s use of AI and
+data analytics for farmer advisories, and **PM eVidya**'s mandate under
+**NEP 2020** to reach learners without reliable internet — the same problem
+LearnLoop was built to solve. VYOMAA LABS is not claiming affiliation with
+any of these programs; the aim is to build toward the same goals, for the
+same people.
+
 ## Running it
 
 **On a laptop (to test the pipeline, not the real deployment target):**
@@ -104,3 +133,29 @@ onto the device. It builds llama.cpp, downloads the model, and starts
 `http://127.0.0.1:8090` in the phone's own browser. Turn on airplane mode
 before testing — that's the actual proof the DPIIT filing needs
 (PROOF_AND_PILOT_PLAN.md, claim #2).
+
+## Data sources & references
+
+Every number in this repo and in the submission deck traces back to one of
+these:
+
+- **AgriLens classifier** — numerically validated against the real torch
+  model trained on the PlantVillage / "New Plant Diseases Dataset" lineage
+  (`spMohanty/PlantVillage-Dataset` GitHub mirror). See `agrilens/NOTES.md`
+  for exactly what's verified vs. assumed vs. proxy, including the known
+  lab-photo-vs-real-world generalization gap this dataset carries.
+- **Fleet Risk classifier** — trained and evaluated on the [Kaggle harsh
+  driving dataset](https://www.kaggle.com/datasets/saboorahmad47/harsh-driving-dataset)
+  (54 trips, ~33k rows, 44 training / 10 held-out). See
+  `vehicle-risk/model/train_report.txt` for the full report.
+- **LearnLoop content** — original, self-authored notes covering a
+  representative slice of Class 8-10 Maths/Science/Social topics, not a
+  full official syllabus transcription. See `learnloop/README.md`.
+- **All latency/thermal/memory/accuracy numbers** — measured directly on
+  the physical Redmi 24116RNC1I this build targets; see `BENCHMARKS.md` and
+  `BATTLE_TEST_REPORT.md` for methodology and raw figures. Nothing in this
+  repo is a laptop number presented as a device number.
+- **Government scheme references** (Startup India/DPIIT, IndiaAI Mission,
+  Digital Agriculture Mission, PM eVidya/NEP 2020) — public program
+  descriptions, cited for mission alignment only; VYOMAA LABS claims no
+  formal affiliation with any of them beyond DPIIT recognition itself.
