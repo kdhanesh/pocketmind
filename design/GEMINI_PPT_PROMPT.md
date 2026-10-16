@@ -17,6 +17,29 @@ in progress, say so plainly; don't claim it's finished.
 
 **Tagline:** "AI in every hand, for a future-ready India."
 
+## How to actually attach these (read this before the links)
+
+Every link below is a real, live, publicly-reachable file on GitHub
+Pages — confirmed working (HTTP 200, correct `image/png` / `video/mp4`
+content-type) as of this writing. How you get each one into the deck
+depends on the tool:
+
+- **Google Slides** (if Gemini is generating/editing an actual Slides
+  file): use **Insert → Image → By URL** and paste the PNG link directly
+  — Slides fetches and embeds it, no download needed. The same works for
+  a video via **Insert → Video → By URL** for the two mp4 links, though
+  Slides video embeds work best with a YouTube/Drive URL rather than a
+  raw mp4 link — if the direct URL doesn't embed cleanly, download the
+  mp4 and re-upload it to Drive first, then insert from Drive.
+- **Gemini chat without direct Slides access**: it may not reliably fetch
+  a remote image URL on its own. The safe path is to download each PNG
+  from the links below first, then attach the actual files in the chat
+  so Gemini can see and place the real pixels — don't rely on it
+  resolving the URL text alone.
+- **Either way**, these are the exact, final images/videos to use — do
+  not regenerate or re-describe them from the text alone if the tool can
+  take the real file.
+
 ## Live links (use these directly — embed the screenshots, link the videos)
 
 - **Product site (architecture, live demo recordings, full benchmarks):**
