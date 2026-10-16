@@ -1,205 +1,199 @@
-Paste everything below this line into Gemini (or another model good at slide
-generation) to get the DPIIT submission deck for PocketMind, VYOMAA LABS'
-on-device AI suite. Every number, status, and claim below is real and final
-— nothing here is a placeholder. Do not invent, round up, or soften any
-figure; if something is marked "in progress," keep it marked that way.
+Paste everything below this line into Gemini to UPDATE the existing,
+already-finalized deck — do not generate a new deck from scratch, and do
+not restructure, reorder, or drop any slide. This follows the exact
+12-slide structure of "VYOMAA LABS: DPIIT Pitch Deck (Organic Edition)"
+(https://docs.google.com/presentation/d/13vPrO6XfPPWv616wJdMI6rtM0uK-SozCumnN1YnXtIk/edit),
+slide by slide, filling in only what was left as a `[CONFIRM: ...]`
+placeholder, with real, final values. Everything else in the deck —
+wording, tone, layout, the stats already sourced on slide 10 — stays as
+it is. One new slide (13, References) is added at the very end.
+
+Where something still cannot be confirmed (team names, a specific pilot
+location, the IndiaAI Innovation Challenge status, the AP airports/freight
+agent system's own data), it is marked **STILL NEEDS YOUR INPUT** below —
+do not invent a value for these, leave the placeholder as-is or ask the
+deck owner.
 
 ---
 
-I need a presentation deck (10-12 slides, 16:9) for a government (DPIIT)
-startup submission and an investor-facing hackathon demo. The company is
-**VYOMAA LABS**, the product is **PocketMind** — three on-device AI tools
-(AgriLens, LearnLoop, Fleet Risk) that run a small, task-tuned language
-model entirely on a mid-range Android phone, with zero cloud calls. Tone:
-confident but honest — this is a real, working, physically-demoed product,
-not a mockup, and the deck should read that way. Where something is still
-in progress, say so plainly; don't claim it's finished.
+## ⚠️ One real mismatch to resolve first — read before editing slide 3
 
-**Tagline:** "AI in every hand, for a future-ready India."
+Slide 3 ("HOW IT WORKS") describes a language layer — "Speak or type in
+an Indian language → Detect language → Translate in → Small model
+answers → Translate back" — and asks to confirm which languages are
+supported ("e.g. Telugu, Hindi, English"). **This does not exist in the
+actual shipped build.** The real PocketMind engine today is English-only
+(LearnLoop's content pack is English, Class 8-10; there is no language
+detection or translation step anywhere in `engine/`). This is not a
+placeholder to fill in with a plausible-sounding list of languages — it
+would be a false claim in a government filing.
 
-## How to actually attach these (read this before the links)
+Two honest ways to resolve it, your call:
+- **(a)** Keep the language-layer diagram but relabel it as a roadmap
+  item — move it under "Next" language, not "Today," and do not name any
+  specific language as tested.
+- **(b)** Remove the language-layer diagram from this slide for now and
+  replace it with the actual architecture that IS shipped: retrieval
+  first, then the model only rephrases the verified note (see the real
+  flow below, under slide 3's fill).
 
-Every link below is a real, live, publicly-reachable file on GitHub
-Pages — confirmed working (HTTP 200, correct `image/png` / `video/mp4`
-content-type) as of this writing. How you get each one into the deck
-depends on the tool:
+Do not silently pick (a) and move on — flag this choice back to whoever
+is finalizing the deck.
 
-- **Google Slides** (if Gemini is generating/editing an actual Slides
-  file): use **Insert → Image → By URL** and paste the PNG link directly
-  — Slides fetches and embeds it, no download needed. The same works for
-  a video via **Insert → Video → By URL** for the two mp4 links, though
-  Slides video embeds work best with a YouTube/Drive URL rather than a
-  raw mp4 link — if the direct URL doesn't embed cleanly, download the
-  mp4 and re-upload it to Drive first, then insert from Drive.
-- **Gemini chat without direct Slides access**: it may not reliably fetch
-  a remote image URL on its own. The safe path is to download each PNG
-  from the links below first, then attach the actual files in the chat
-  so Gemini can see and place the real pixels — don't rely on it
-  resolving the URL text alone.
-- **Either way**, these are the exact, final images/videos to use — do
-  not regenerate or re-describe them from the text alone if the tool can
-  take the real file.
+## Live links and files
 
-## Live links (use these directly — embed the screenshots, link the videos)
-
-- **Product site (architecture, live demo recordings, full benchmarks):**
-  https://kdhanesh.github.io/pocketmind/
-- **Combined narrated walkthrough video (~3min, landscape, all 3 tools +
-  architecture + business model + national mission + offline proof, voiced):**
+- **Product site:** https://kdhanesh.github.io/pocketmind/
+- **Combined narrated demo video** (~3 min, landscape, all three tools +
+  architecture + business model + national mission + offline proof):
   https://kdhanesh.github.io/pocketmind/media/demo-full-narrated.mp4
-- **Per-tool raw screen recordings** (use these on the individual tool
-  slides if you'd rather show the specific tool's own clip instead of the
-  combined video):
-  - AgriLens: https://kdhanesh.github.io/pocketmind/media/demo-agrilens.mp4
-  - LearnLoop: https://kdhanesh.github.io/pocketmind/media/demo-learnloop.mp4
-  - Fleet Risk: https://kdhanesh.github.io/pocketmind/media/demo-fleet.mp4
-- **Screenshots** (use as static images wherever a slide needs a result
-  visual instead of/alongside video):
-  - Phone home screen: https://kdhanesh.github.io/pocketmind/media/home.png
-  - AgriLens result (Tomato Septoria leaf spot, 100% confidence): https://kdhanesh.github.io/pocketmind/media/agrilens-result.png
-  - LearnLoop result (Newton's second law, grounded answer): https://kdhanesh.github.io/pocketmind/media/learnloop-result.png
-  - Fleet Risk dashboard (risk tiers, timeline, flagged events): https://kdhanesh.github.io/pocketmind/media/fleet-dashboard.png
-  - Offline/airplane-mode proof (plane icon visible, WiFi off, correct answer): https://kdhanesh.github.io/pocketmind/media/airplane-proof.png
+- **Per-tool raw clips:** demo-agrilens.mp4, demo-learnloop.mp4,
+  demo-fleet.mp4 (same `/media/` path as above)
+- **Screenshots — real image files, in this repo at
+  `design/demo-media/`, to attach directly (don't rely on a tool fetching
+  the URL below reliably):** `home.png`, `agrilens-result.png`,
+  `learnloop-result.png`, `fleet-dashboard.png`, `airplane-proof.png`.
+  Same files are also live at `https://kdhanesh.github.io/pocketmind/media/<name>`
+  if a tool supports Insert Image → By URL (Google Slides does).
+- **QR code for "Watch the demo" (slide 9):** no QR generator is
+  available in this environment — generate one from the narrated-video
+  URL above using any QR tool (e.g. qr-code-generator.com) and paste the
+  image in.
 
-## Slide-by-slide content
+## Slide-by-slide fills
 
-**1. Cover**
-"PocketMind" — VYOMAA LABS · DPIIT Submission. Subhead: "Three tools. One
-phone. No signal required." Badges: "Zero cloud calls" / "0.5B params,
-task-tuned layers" / "Airplane-mode verified". Use home.png as the hero
-image.
+**Slide 1 — Cover.** No placeholder to fill. Unchanged.
 
-**2. The core rule**
-Statement slide: "The model is never allowed to invent a fact." Every tool
-retrieves a verified note first, then lets the model only rephrase it in
-plain language. If nothing verified matches, the tool refuses instead of
-guessing. This is the one design decision everything else serves — a small
-model will hallucinate a pesticide dose or a wrong formula if allowed to
-generate freely, and that's real-world harm, not a demo glitch.
+**Slide 2 — THE PROBLEM.** No placeholder to fill. The stats here
+(UDISE+ 63.5%, Agriculture Census 86%) are already sourced — carry their
+citations forward to the new References slide (13), don't duplicate them
+inline.
 
-**3. How it works (architecture)**
-Flow: Sensor input (photo / question / IMU stream) → Classifier or
-retrieval (tiny offline model / keyword match) → Matched a verified entry?
-→ YES: model rephrases the verified note only, cannot add new facts, shown
-with confidence + timing → NO: "not confident enough," no guess given. No
-embedding model, no vector index, no multi-agent framework — there isn't
-RAM to spare for a second heavy process on a 3.5GB phone, and the real task
-(one retrieval hop, one rephrase call) doesn't need one.
+**Slide 3 — HOW IT WORKS.** Resolve the language-layer mismatch above
+first. The actual shipped architecture, if you go with option (b):
+"Every request is matched against verified, pre-written content first.
+Only if there's a confident match does the model rephrase that note in
+plain language — it is never allowed to invent a fact. If nothing
+matches, the tool says so instead of guessing." No language has been
+tested/confirmed beyond English — do not name Telugu or Hindi as
+supported.
 
-**4. The three tools**
-- **AgriLens** — crop photo → disease ID → verified agronomy advice.
-  Classifier numerically validated against the real model; piloting with
-  **5 farmers** in the field. Embed agrilens-result.png and/or the AgriLens
-  clip.
-- **LearnLoop** — Class 8-10 question → grounded, plain-language
-  explanation from verified study notes. Piloting with **10 students**.
-  Embed learnloop-result.png and/or the LearnLoop clip.
-- **Fleet Risk** — accelerometer trip data → two-stage offline risk
-  classifier, **70% held-out accuracy**. Embed fleet-dashboard.png and/or
-  the Fleet Risk clip.
+**Slide 4 — THE PLATFORM.** No placeholder to fill. Matches the real
+build: AgriLens and LearnLoop are "Now," Edge fleet unit (Fleet Risk) is
+also real and running today, not just "Next" — it replays real trip data
+through a two-stage offline classifier live on-device (70% held-out
+accuracy). Consider moving "Edge fleet unit / Vehicle safety" from "Next"
+to "Now" alongside AgriLens and LearnLoop, since it's built and running,
+even though vehicle hardware integration and the cloud layer are still
+in progress. EcoTrace and MedNotes stay "Next" — nothing built yet.
 
-**5. Who we build for (business model — be precise here, this is the
-commercial story)**
-- AgriLens and LearnLoop are **free** for individual farmers and students.
-- For **schools**: LearnLoop is customized to that school's own syllabus
-  and curriculum, acting as a first-hand mentor — not a generic chatbot.
-- For **agribusiness** (companies running large farms / crop supply
-  chains): a **paid, customized AgriLens** — VYOMAA LABS builds a new
-  dataset and trains a model specific to the exact crop that company
-  grows, then hands their farmer network a smart device tuned to it. This
-  is a separate, paid offering, distinct from the free farmer tool.
-- **Fleet Risk is closed-source by design** — a licensed product built to
-  be sold into fleet-management and transportation/logistics companies
-  only. Not free, not open, unlike the other two tools.
+**Slide 5 — FIRST PRODUCTS.**
+- AgriLens stage: **prototype, in field pilot — 5 farmers.** Not yet
+  "field-tested" to completion; honestly "prototype" with a pilot
+  underway.
+- LearnLoop stage: **prototype, in field pilot — 10 students** across
+  Class 8-10 topics.
+- Replace "Illustrative screens" with the real screenshots:
+  `agrilens-result.png` (shows the real Tomato Septoria leaf spot
+  result, 100% confidence) and `learnloop-result.png` (real grounded
+  Newton's-second-law answer). Airplane-mode icon is visible in the real
+  LearnLoop screenshot too, if you want one image to carry both the
+  product and the offline claim.
 
-**6. Measured performance**
-Device: Redmi 24116RNC1I, Android 16, arm64-v8a, 3.5GB RAM (~1.6GB
-available at idle). Table: 1.5B-parameter baseline (42-84s/answer) vs.
-0.5B parameters with task-tuned layers, the shipped default (15.3s
-single-shot, 15-55s under load) — same quality, no loss found. Metrics:
-35.0°C→34.0°C battery temp across a ~25-call stress run (no throttling),
-~30-50MB RAM truly free with the model loaded, 99.997% AgriLens confidence
-on a clean lab photo, 54ms for a full 1,034-row Fleet Risk trip replay.
+**Slide 6 — FLEETS AND NEXT SECTORS.**
+- Edge AI fleet unit stage: **prototype — not yet in pilot with a named
+  fleet.** The model runs live on-device against recorded trip data
+  (70% held-out accuracy, 54ms for a full ~1,000-row trip replay); the
+  on-vehicle sensor/IMU hardware and the AWS cloud-aggregation layer are
+  both still in progress. Do not claim a named fleet pilot — there isn't
+  one yet.
+- MedNotes and EcoTrace: no change, both still "Next," nothing to fill.
 
-**7. Hardened before it went near a demo**
-Four real bugs found and fixed during adversarial testing on the live
-phone: (1) AgriLens had no confidence floor — any image forced a
-diagnosis, fixed with a 70% confidence gate; (2) LearnLoop's retrieval
-could match on stopwords alone and let the model answer from its own
-knowledge instead of refusing, fixed with stopword filtering; (3) a
-path-traversal bug in Fleet Risk's trip selector, fixed with a directory
-whitelist check; (4) AgriLens's multipart upload parser silently
-truncated large photos whose binary bytes happened to contain the
-boundary string, fixed by requiring the delimiter be preceded by its own
-CRLF. One open item, tracked not hidden: LearnLoop's answer time drifts
-from ~15s to 30-55s across repeated back-to-back questions (thermal
-throttling ruled out).
+**Slide 7 — ENGINEERING METHOD.** No placeholder to fill. Unchanged.
 
-**8. Deployment status, honestly — do not mark anything "complete" that
-isn't**
-| Component | Status | Detail |
-|---|---|---|
-| AgriLens field pilot | In progress | Piloting with 5 farmers, collecting real field photos |
-| LearnLoop field pilot | In progress | Piloting with 10 students across Class 8-10 topics |
-| Fleet Risk — database layer | **Complete** | On-device trip/event schema built and verified |
-| Fleet Risk — vehicle hardware | In progress | Building up the on-vehicle sensor/IMU layer |
-| Fleet Risk — cloud compute | In progress | AWS layer for fleet-wide aggregation being built |
+**Slide 8 — WHY WE ARE DIFFERENT.** No placeholder to fill. Unchanged.
+("Verified agents" / "refusal of unverified numbers" already matches the
+real confidence-gating and retrieval-precision fixes documented in
+`BATTLE_TEST_REPORT.md`.)
 
-End-to-end on the actual phone is done and confirmed — over WiFi and with
-WiFi explicitly disabled plus airplane mode on, for all three tools. Use
-airplane-proof.png here or on slide 11.
+**Slide 9 — PROOF AND TRACTION.**
+- Screenshots: use `fleet-dashboard.png` (the real risk-tier/timeline/
+  event-card dashboard) for "dashboard," and `airplane-proof.png` (plane
+  icon visible, WiFi confirmed off, correct grounded answer in 55.5s)
+  for "phone in airplane mode." **STILL NEEDS YOUR INPUT:** "agent
+  trace" screenshot — this refers to the separate AP airports/freight
+  agent system, not PocketMind; pull that screenshot from that project,
+  not from this repo.
+- "PocketMind on a phone, offline": model = **a 0.5B-parameter model
+  with task-tuned layers** (never name the specific base model/vendor —
+  deliberate, keep consistent with the rest of this deck's wording);
+  phone = **Redmi 24116RNC1I**; demo recorded in airplane mode =
+  **confirmed, yes** (WiFi explicitly disabled at the radio, not just the
+  airplane-mode toggle — see `BATTLE_TEST_REPORT.md` for the exact
+  verification method).
+- "Agriculture field work": **5 farmers**, piloting AgriLens. **STILL
+  NEEDS YOUR INPUT:** where (district/state) — not something this repo
+  has; fill in from whoever is running the pilot.
+- "IndiaAI Innovation Challenge [CONFIRM status: RTGS x Govt. of Andhra
+  Pradesh]": **STILL NEEDS YOUR INPUT** — this repo has no data on this
+  challenge's status; do not guess or imply a status wasn't confirmed.
+- "Watch the demo": link is the narrated video URL above; QR code to be
+  generated separately (see "Live links and files").
 
-**9. Where latency is headed**
-Current 15-55s answer times reflect an unoptimized pipeline, not a
-ceiling. The model's own layers and the routing between retrieval and
-generation are actively being tuned — newer quantization, decoding, and
-routing algorithms and patterns are being tested now. Target: a couple of
-seconds per answer, end to end, by the end of this year. Flag this
-explicitly as a forward-looking engineering target, not a measured result.
+**Slide 10 — MARKET SCOPE.** No placeholder to fill — already real,
+already sourced (IAMAI 2025, UDISE+ 2024-25, Agriculture Census
+2015-16, Brickwork 2024). Carry these four citations into slide 13.
 
-**10. A better India ahead (mission + national alignment)**
-Once the architecture layers, training process, and performance
-benchmarks are finalized across sectors, the target is **100+
-fully-trained, customized models** — each tuned to its own sector the way
-AgriLens and LearnLoop already are — all runnable on any smartphone of
-even the lowest practical configuration, so access is never gated by
-hardware. This sits alongside work already underway nationally:
-**Startup India / DPIIT recognition** (the basis of this filing), the
-**IndiaAI Mission**'s push to democratize AI access, the **Digital
-Agriculture Mission**'s use of AI and data analytics for farmer
-advisories, and **PM eVidya**'s mandate under **NEP 2020** to reach
-learners without reliable internet — the same problem LearnLoop was built
-to solve. Be precise: VYOMAA LABS claims no formal affiliation with any of
-these programs beyond DPIIT recognition itself — the point is shared
-goals, not partnership.
+**Slide 11 — BUSINESS MODEL.** No placeholder to fill — this is already
+the real, correct model: free/low-cost direct to individuals, paid at
+the institution level. Keep it exactly as written:
+- Schools and universities: per-seat/per-institution LearnLoop licences.
+- Agri co-ops and FPOs: farmer advisory subscriptions, local
+  crop-knowledge packs. (Individual farmers themselves still get
+  AgriLens access at no cost — the co-op/FPO layer is what's paid.)
+- Commercial fleets: edge hardware unit + per-vehicle monthly
+  subscription.
+- Developers/OEMs: PocketMind SDK licence + domain model packs.
+- Governments: deployment, localisation, citizen-service contracts.
+- Clinics (next): MedNotes licence per practitioner.
 
-**11. See it live (closing)**
-Link to the product site (https://kdhanesh.github.io/pocketmind/) and the
-combined narrated demo video (link above). Tagline: "VYOMAA LABS · AI in
-every hand, for a future-ready India."
+**Slide 12 — ROADMAP AND ASK.**
+- Team: **STILL NEEDS YOUR INPUT** — partner names/roles are personal
+  information this repo has no record of; fill in directly, don't guess.
+- DPIIT ask: no placeholder, already correct — Startup India benefits,
+  government procurement/grant access, IP support.
+- Roadmap milestones: no placeholder to fill, already real and
+  consistent with where things actually stand (0-3 months: harden +
+  launch site — the site is in fact already live at the link above, so
+  that part of month 0-3 is done; 3-6 months: pilots — AgriLens and
+  LearnLoop pilots are already underway at 5 farmers / 10 students, so
+  note that as ahead of schedule if accurate).
 
-**12. Data sources & references (last slide — keep this as the final
-slide, it's a citations/appendix slide, not a sales slide)**
+## New slide 13 — References (add at the very end)
+
+A citations/appendix slide, not a sales slide. Combine the four sources
+already used on slide 10 with the sources behind this repo's own
+numbers:
+
 | Claim | Source |
 |---|---|
+| 958M active internet users in India, ~548M (57%) rural | IAMAI, 2025 |
+| 14.7 lakh schools, 63.5% with internet | UDISE+ 2024-25 |
+| 14.6 crore operational farm holdings, 86% small/marginal | Agriculture Census 2015-16 |
+| 7.4M commercial vehicles, ~3.5M with telematics | Brickwork, 2024 |
 | AgriLens classifier | Numerically validated against a real torch model trained on the PlantVillage / "New Plant Diseases Dataset" lineage (spMohanty/PlantVillage-Dataset mirror) |
 | Fleet Risk classifier | Kaggle "Harsh driving dataset" — 54 trips, ~33,000 rows, 44 training / 10 held-out |
 | LearnLoop content | Original, self-authored notes — a representative slice of Class 8-10 topics, not a full official syllabus transcription |
-| Latency / thermal / memory / accuracy | Measured directly on the physical Redmi 24116RNC1I this build targets — no laptop numbers presented as device numbers |
-| Government scheme references | Public program descriptions, cited for mission alignment only — no formal affiliation claimed beyond DPIIT recognition itself |
+| Latency/thermal/memory/accuracy figures | Measured directly on the physical Redmi 24116RNC1I this build targets — no laptop numbers presented as device numbers |
 
 ## Things to get right (don't let the model drift on these)
 
-- Never name the underlying base language model. Describe it only as "a
-  0.5B-parameter model with task-tuned layers" or similar. This is
-  deliberate — do not substitute a specific model/vendor name anywhere in
-  the deck.
-- Never claim Fleet Risk's hardware or cloud layer is done — both are
-  explicitly "in progress." Only the database/schema layer is "complete."
-- Never round the pilot numbers up or down — exactly 5 farmers, exactly 10
-  students.
-- Never claim formal government/program affiliation — alignment only,
-  explicitly caveated, except for DPIIT recognition itself (which is real
-  and is the basis of this filing).
-- Keep the "Where latency is headed" numbers as a target/roadmap, not a
-  measured result.
+- Never name the underlying base language model anywhere in the deck —
+  "a 0.5B-parameter model with task-tuned layers" only.
+- Never claim a named fleet pilot, a confirmed language beyond English,
+  or an IndiaAI Challenge status — these are explicitly unconfirmed;
+  leave them flagged, not filled with a guess.
+- Keep the pilot numbers exact: 5 farmers, 10 students. Don't round.
+- Don't touch the AP airports/freight agent system's own claims (slide
+  9) — that's a different project; this repo has no data to update it.
+- Don't restructure the 12 real slides or change their order; only add
+  slide 13 after them.
