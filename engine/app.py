@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 import sys
 import tempfile
 import time
@@ -289,6 +290,13 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
   .err { color: var(--danger); font-weight: 600; margin: 0; }
   pre { white-space: pre-wrap; font-family: inherit; line-height: 1.6; margin: 0; font-size: 0.925rem; }
 
+  .answer { line-height: 1.6; font-size: 0.925rem; }
+  .answer p { margin: 0 0 12px; }
+  .answer p:last-child { margin-bottom: 0; }
+  .answer ul, .answer ol { margin: 0 0 12px; padding-left: 1.3em; }
+  .answer li { margin-bottom: 4px; }
+  .answer strong { font-weight: 700; color: var(--ink); }
+
   .thinking {
     display: flex;
     align-items: center;
@@ -384,7 +392,7 @@ PAGE_HEAD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
   <a href="/fleet" class="__NAV_FLEET__">Fleet Risk</a>
 </nav>
 """
-PAGE_SCRIPT = """
+PAGE_SCRIPT = r"""
 <script>
 (function(){
   function fmtT(s){ return s.toFixed(1) + "s"; }
@@ -392,6 +400,47 @@ PAGE_SCRIPT = """
     return s.replace(/[&<>"']/g, function(c){
       return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
     });
+  }
+
+  // The SLM's own output commonly carries markdown syntax (**bold**,
+  // "- " / "1. " lists, "### " headings) and even raw LaTeX (\( a^2 \),
+  // \sqrt{25}) even when asked for plain language -- that's a strong
+  // prior from its training data, not something a prompt reliably
+  // suppresses. Render it instead of dumping it raw into a <pre>, where
+  // literal asterisks/hashes/backslashes make formulas and lists unreadable.
+  var SUPERSCRIPT = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
+  function toSuper(digits){
+    return digits.replace(/[-0-9]/g, function(d){ return SUPERSCRIPT[d] || d; });
+  }
+  function cleanMath(s){
+    return s
+      .replace(/\\\(|\\\)|\\\[|\\\]/g, '')
+      .replace(/\\sqrt\{([^{}]+)\}/g, '√($1)')
+      .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1/$2)')
+      .replace(/\^\{(-?[0-9]+)\}/g, function(m, d){ return toSuper(d); })
+      .replace(/\^(-?[0-9]+)/g, function(m, d){ return toSuper(d); })
+      .replace(/ {2,}/g, ' ')
+      .replace(/ ([.,;:?!])/g, '$1');
+  }
+  function formatAnswer(raw){
+    var escaped = escapeHtml(cleanMath(raw)).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    var lines = escaped.split('\n');
+    var html = '', para = [], list = null, listItems = [];
+    function flushPara(){ if (para.length){ html += '<p>' + para.join('<br>') + '</p>'; para = []; } }
+    function flushList(){ if (list){ html += '<' + list + '>' + listItems.join('') + '</' + list + '>'; list = null; listItems = []; } }
+    lines.forEach(function(line){
+      var t = line.trim();
+      var heading = t.match(/^#{1,6}\s+(.+)$/);
+      if (heading){ flushPara(); flushList(); html += '<h4>' + heading[1] + '</h4>'; return; }
+      if (t === ''){ flushPara(); flushList(); return; }
+      var bullet = t.match(/^[-*]\s+(.+)$/);
+      var numbered = t.match(/^\d+[.)]\s+(.+)$/);
+      if (bullet){ flushPara(); if (list !== 'ul'){ flushList(); list = 'ul'; } listItems.push('<li>' + bullet[1] + '</li>'); return; }
+      if (numbered){ flushPara(); if (list !== 'ol'){ flushList(); list = 'ol'; } listItems.push('<li>' + numbered[1] + '</li>'); return; }
+      flushList(); para.push(t);
+    });
+    flushPara(); flushList();
+    return html;
   }
 
   function renderFleetResult(data) {
@@ -461,7 +510,7 @@ PAGE_SCRIPT = """
     return '<div class="card result">' +
       '<h3>' + escapeHtml(data.title) + '</h3>' +
       '<div class="meta">' + escapeHtml(data.meta) + '</div>' +
-      '<pre>' + escapeHtml(data.answer) + '</pre>' +
+      '<div class="answer">' + formatAnswer(data.answer) + '</div>' +
       '<div class="caveat">' + escapeHtml(data.caveat) + '</div>' +
       '</div>';
   }
@@ -606,12 +655,100 @@ def _trip_label(fname: str) -> str:
     return " ".join(parts[1:3]) if len(parts) > 2 else fname
 
 
+_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
+_HEADING_RE = re.compile(r"^#{1,6}\s+(.+)$")
+_BULLET_RE = re.compile(r"^[-*]\s+(.+)$")
+_NUMBERED_RE = re.compile(r"^\d+[.)]\s+(.+)$")
+_LATEX_DELIM_RE = re.compile(r"\\\(|\\\)|\\\[|\\\]")
+_SQRT_RE = re.compile(r"\\sqrt\{([^{}]+)\}")
+_FRAC_RE = re.compile(r"\\frac\{([^{}]+)\}\{([^{}]+)\}")
+_EXP_BRACE_RE = re.compile(r"\^\{(-?[0-9]+)\}")
+_EXP_RE = re.compile(r"\^(-?[0-9]+)")
+_MULTISPACE_RE = re.compile(r" {2,}")
+_SPACE_BEFORE_PUNCT_RE = re.compile(r" ([.,;:?!])")
+_SUPERSCRIPT = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
+
+
+def clean_math(s: str) -> str:
+    """Convert the SLM's occasional raw LaTeX (\\( a^2 \\), \\sqrt{25}) into
+    plain text/Unicode, matching how the hand-written content files already
+    express math (a² + b² = c²). Mirrors the JS cleanMath() -- keep in sync.
+    """
+    s = _LATEX_DELIM_RE.sub("", s)
+    s = _SQRT_RE.sub("\u221a(\\1)", s)
+    s = _FRAC_RE.sub(r"(\1/\2)", s)
+    s = _EXP_BRACE_RE.sub(lambda m: m.group(1).translate(_SUPERSCRIPT), s)
+    s = _EXP_RE.sub(lambda m: m.group(1).translate(_SUPERSCRIPT), s)
+    s = _MULTISPACE_RE.sub(" ", s)
+    s = _SPACE_BEFORE_PUNCT_RE.sub(r"\1", s)
+    return s
+
+
+def format_answer(raw: str) -> str:
+    """Render the SLM's own markdown (it defaults to **bold**/lists/headings
+    even when told to write plain language) instead of dumping it raw into
+    a <pre>, where literal asterisks/hashes/backslashes make formulas and
+    lists unreadable. Mirrors the JS formatAnswer() above -- keep in sync.
+    """
+    escaped = _BOLD_RE.sub(r"<strong>\1</strong>", html.escape(clean_math(raw)))
+    out: list[str] = []
+    para: list[str] = []
+    list_tag = None
+    list_items: list[str] = []
+
+    def flush_para():
+        if para:
+            out.append(f"<p>{'<br>'.join(para)}</p>")
+            para.clear()
+
+    def flush_list():
+        nonlocal list_tag
+        if list_tag:
+            out.append(f"<{list_tag}>{''.join(list_items)}</{list_tag}>")
+            list_items.clear()
+            list_tag = None
+
+    for line in escaped.split("\n"):
+        t = line.strip()
+        heading = _HEADING_RE.match(t)
+        if heading:
+            flush_para()
+            flush_list()
+            out.append(f"<h4>{heading.group(1)}</h4>")
+            continue
+        if not t:
+            flush_para()
+            flush_list()
+            continue
+        bullet = _BULLET_RE.match(t)
+        numbered = _NUMBERED_RE.match(t)
+        if bullet:
+            flush_para()
+            if list_tag != "ul":
+                flush_list()
+                list_tag = "ul"
+            list_items.append(f"<li>{bullet.group(1)}</li>")
+            continue
+        if numbered:
+            flush_para()
+            if list_tag != "ol":
+                flush_list()
+                list_tag = "ol"
+            list_items.append(f"<li>{numbered.group(1)}</li>")
+            continue
+        flush_list()
+        para.append(t)
+    flush_para()
+    flush_list()
+    return "".join(out)
+
+
 def result_card(title: str, meta: str, answer: str, caveat: str) -> str:
     return f"""
 <div class="card result">
   <h3>{html.escape(title)}</h3>
   <div class="meta">{html.escape(meta)}</div>
-  <pre>{html.escape(answer)}</pre>
+  <div class="answer">{format_answer(answer)}</div>
   <div class="caveat">{html.escape(caveat)}</div>
 </div>
 """
@@ -734,7 +871,9 @@ class Handler(BaseHTTPRequestHandler):
                 system=("You are AgriLens, an offline farm-advisory assistant. Explain the "
                         "following verified agronomy note in plain, simple language for a "
                         "farmer. Do not add any fact, chemical name, or dose that isn't in "
-                        "the note below."),
+                        "the note below. Write in plain text only -- no markdown headings, "
+                        "no LaTeX math (no \\( \\), no \\sqrt, no \\frac); write any numbers "
+                        "or units in ordinary text."),
                 user=f"Classifier diagnosis: {chunk.title}\n\nVerified note:\n{chunk.body}\n\n"
                      f"Explain this in 3-4 short sentences.",
             )
@@ -776,7 +915,10 @@ class Handler(BaseHTTPRequestHandler):
             prompt = build_prompt(
                 system=("You are LearnLoop, an offline study partner for an Indian school "
                         "student. Explain the following verified note in plain language, "
-                        "like a patient tutor. Do not add any fact that isn't in the note."),
+                        "like a patient tutor. Do not add any fact that isn't in the note. "
+                        "Write in plain text only -- no markdown headings (no ###), no LaTeX "
+                        "math (no \\( \\), no \\sqrt, no \\frac, no ^{}); write formulas the "
+                        "way the note itself does, e.g. a² + b² = c², not \\( a^2+b^2=c^2 \\)."),
                 user=f"Student's question: {question}\n\nVerified note ({chunk.title}):\n"
                      f"{chunk.body}\n\nExplain it, and if useful, walk through the example step by step.",
             )
