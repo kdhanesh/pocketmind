@@ -44,8 +44,8 @@ depends on the tool:
 
 - **Product site (architecture, live demo recordings, full benchmarks):**
   https://kdhanesh.github.io/pocketmind/
-- **Combined narrated walkthrough video (2m10s, all 3 tools + architecture
-  + offline proof, voiced):**
+- **Combined narrated walkthrough video (~3min, landscape, all 3 tools +
+  architecture + business model + national mission + offline proof, voiced):**
   https://kdhanesh.github.io/pocketmind/media/demo-full-narrated.mp4
 - **Per-tool raw screen recordings** (use these on the individual tool
   slides if you'd rather show the specific tool's own clip instead of the
