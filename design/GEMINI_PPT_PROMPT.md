@@ -47,9 +47,9 @@ repo's `design/demo-media/` folder — **attach these directly as files**
 when pasting into Gemini; don't rely on it fetching a URL. The same
 filenames (hyphenated instead of underscored) are also live on the
 website if a tool supports Insert Image/Video → By URL (Google Slides
-does): `https://kdhanesh.github.io/pocketmind/media/<hyphenated-name>`.
+does): `https://vyomaalabs.github.io/pocketmind/media/<hyphenated-name>`.
 
-- **Product site:** https://kdhanesh.github.io/pocketmind/
+- **Product site:** https://vyomaalabs.github.io/pocketmind/
 
 - **Combined narrated demo video** (~3 min, landscape, all three tools +
   architecture + business model + national mission + offline proof,
