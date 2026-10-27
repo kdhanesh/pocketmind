@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VYOMAA LABS</title>
+<style>
+  /*
+    Layout concept: a quiet hero thesis, one core-engine panel, and a
+    clean 2x2 grid of the four projects built on it. Nothing else —
+    this page exists to show what's being built, not to explain it.
+  */
+  :root{
+    --bg:        #0d1210;
+    --bg-raised: #141b18;
+    --fg:        #e9efe9;
+    --muted:     #9fb0a6;
+    --line:      #26322c;
+    --accent:    #d9a94e;   /* brass/amber */
+    --accent-fg: #221a08;
+    --sage:      #7fae8e;   /* secondary: growth/ecosystem */
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:        #f4f3ee;
+      --bg-raised: #ffffff;
+      --fg:        #1b2420;
+      --muted:     #5b6a61;
+      --line:      #dcdccf;
+      --accent:    #a97a1f;
+      --accent-fg: #fff8ea;
+      --sage:      #3f7a56;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:        #f4f3ee;
+    --bg-raised: #ffffff;
+    --fg:        #1b2420;
+    --muted:     #5b6a61;
+    --line:      #dcdccf;
+    --accent:    #a97a1f;
+    --accent-fg: #fff8ea;
+    --sage:      #3f7a56;
+    color-scheme: light;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:'Source Sans 3',system-ui,-apple-system,Segoe UI,sans-serif;
+    padding-inline:20px; padding-block:0; margin:0;
+    max-width:960px; margin-inline:auto;
+  }
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif; text-wrap:balance; margin:0}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace}
+
+  .hero{padding-block:64px 28px}
+  .eyebrow{
+    font-size:.78rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--sage); font-weight:600; margin-bottom:14px;
+  }
+  .hero h1{font-size:clamp(2.1rem,6vw,3.4rem); line-height:1.08; font-weight:600}
+  .hero h1 em{color:var(--accent); font-style:normal}
+  .hero p{
+    max-width:38em; color:var(--muted); font-size:1.05rem; line-height:1.6;
+    margin-top:16px;
+  }
+
+  .label{
+    font-size:.74rem; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; margin-bottom:10px;
+  }
+
+  .core{
+    border:1px solid var(--line); border-radius:14px;
+    background:var(--bg-raised); padding:24px;
+    margin-block:28px 36px; display:flex; flex-wrap:wrap; gap:18px;
+    align-items:flex-start; justify-content:space-between;
+  }
+  .core .copy{flex:1; min-width:220px}
+  .core h2{font-size:1.5rem}
+  .core p{color:var(--muted); margin-top:8px; max-width:34em; line-height:1.55}
+  .tag{
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:.72rem;
+    padding:2px 8px; border-radius:5px; background:var(--accent); color:var(--accent-fg);
+    font-weight:600; letter-spacing:.02em;
+  }
+  .note{
+    font-family:'IBM Plex Mono',monospace; font-size:.74rem; color:var(--muted);
+    margin-top:10px; border-left:2px solid var(--sage); padding-left:10px;
+  }
+
+  .grid{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:16px;
+    margin-block:8px 48px;
+  }
+  @media (max-width:560px){ .grid{grid-template-columns:1fr} }
+  .card{
+    border:1px solid var(--line); border-radius:12px; padding:20px;
+    background:var(--bg-raised); min-width:0;
+    transition:border-color .15s ease;
+  }
+  .card:hover{border-color:var(--sage)}
+  .card h3{font-size:1.15rem; margin-bottom:8px}
+  .card p{color:var(--muted); font-size:.92rem; line-height:1.5; margin:0}
+  .card .note{margin-top:12px}
+
+  footer{
+    padding-block:30px 44px; margin-top:12px; border-top:1px solid var(--line);
+    color:var(--muted); font-size:.85rem;
+    display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px;
+  }
+  footer a{color:var(--fg); text-decoration:underline; text-decoration-color:var(--line)}
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<section class="hero">
+  <div class="eyebrow">VYOMAA LABS</div>
+  <h1>Real AI, built by a small team,<br><em>running off a phone.</em></h1>
+  <p>Five AI projects, one shared on-device engine — no server farm, no
+     funding round, just a phone that's part of the team. Vyomaa ("sky,
+     boundless") is the idea: AI that does real work, quietly, close to
+     the person using it.</p>
+</section>
+
+<div class="core">
+  <div class="copy">
+    <span class="tag">CORE ENGINE</span>
+    <h2 style="margin-top:10px">PocketMind</h2>
+    <p>A small language model that runs fully on-device — on the same phone
+       serving this page. No cloud call, no data leaving the device. Every
+       project below is built on it, and it's the whole reason any of them
+       are worth building: each problem already has a popular app online —
+       this is the version that needs no internet and no server bill.</p>
+    <p class="note">Matches YC Fall 2026's RFS "New Operating Systems for
+       the Physical World" — software that does real work close to where
+       it happens, instead of in a data center.</p>
+  </div>
+</div>
+
+<div class="label">Four problems, one engine</div>
+<div class="grid">
+  <div class="card">
+    <span class="tag" style="background:var(--sage)">MEDICINE</span>
+    <h3 style="margin-top:10px">MedNotes</h3>
+    <p>Turns a clinician's spoken case notes into structured, searchable
+       records — on-device, so patient data never has to leave the room.</p>
+    <p class="note">Closest to YC F26's RFS "AI for the Aging Population" —
+       health monitoring and caregiving, the nearest fit this round since
+       YC has no dedicated clinical-AI request.</p>
+  </div>
+  <div class="card">
+    <span class="tag" style="background:var(--sage)">FARMING</span>
+    <h3 style="margin-top:10px">AgriLens</h3>
+    <p>Point a phone camera at a crop, get an instant health read — built
+       for fields with no signal and no patience for a 40MB app.</p>
+    <p class="note">Matches YC F26's RFS "Data for the Real World," which
+       names agriculture directly as one of the industries to digitize.</p>
+  </div>
+  <div class="card">
+    <span class="tag" style="background:var(--sage)">ECOSYSTEM</span>
+    <h3 style="margin-top:10px">EcoTrace</h3>
+    <p>Crowdsourced phone photos turned into a living map of local
+       biodiversity and pollution, read and tagged automatically.</p>
+    <p class="note">Same RFS, "Data for the Real World" — it calls out
+       desertification and weather forecasting as the kind of real-world
+       signal worth collecting.</p>
+  </div>
+  <div class="card">
+    <span class="tag" style="background:var(--sage)">EDUCATION</span>
+    <h3 style="margin-top:10px">LearnLoop</h3>
+    <p>A patient AI conversation partner for students to practice speaking
+       and thinking out loud, in their own language, without judgment.</p>
+    <p class="note">Matches YC F26's RFS "The Primer" — an adaptive AI
+       tutor for reading, writing, and arithmetic at consumer scale.</p>
+  </div>
+</div>
+
+<footer>
+  <span>&copy; 2026 VYOMAA LABS</span>
+  <span><a href="mailto:kesamdhaneswarareddy@gmail.com">kesamdhaneswarareddy@gmail.com</a></span>
+</footer>
+
+</body>
+</html>
